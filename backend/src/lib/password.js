@@ -1,11 +1,15 @@
-import bcrypt, { compare, hash } from "bcrypt"
-const SALTROUND = 10
+import { compare, hash } from "bcrypt";
 
-//HASH PASSWD
-export const hashpassword = async (password) => {
-    return await hash(password,SALTROUND)
-}
-//compare password
-export const comparepassword  = async (password,hashedpassword) => {
-return await compare(password,hashedpassword)
-}
+const SALTROUND = 10;
+
+export const Hashvalue = (value) => {
+  return hash(value, SALTROUND);
+};
+
+export const Comparevalue = async (value, hashedvalue) => {
+  if (!value || !hashedvalue) {
+    return false;
+  }
+
+  return compare(value, hashedvalue);
+};

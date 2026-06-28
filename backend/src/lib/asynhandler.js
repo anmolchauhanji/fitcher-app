@@ -1,4 +1,4 @@
-const asynchandler = async (handler)=> {
+const asynchandler =  (handler)=> {
     return(req,res,next)=>{
         Promise.resolve(handler(req,res,next)).catch(next)
     }

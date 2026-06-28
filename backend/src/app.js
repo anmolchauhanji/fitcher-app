@@ -5,10 +5,20 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 
-import { env } from "./config/env.js";
+import  env from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
+import routes from "./routes/index.js";
 
 const app = express();
+
+// Morgan logging - MUST BE FIRST to log all requests
+if (env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+  console.log("📊 Morgan HTTP request logging ENABLED");
+}
+
+console.log(`🔧 Environment: ${env.NODE_ENV}`);
+
 app.use(helmet());
 
 app.use(
@@ -21,10 +31,6 @@ app.use(
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-if (env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
@@ -44,6 +50,8 @@ app.get("/", (req, res) => {
   });
 });
 
+
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -52,7 +60,7 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
+app.use("/api/v1",routes)
 app.use(notFoundHandler);
 app.use(errorHandler);
 
