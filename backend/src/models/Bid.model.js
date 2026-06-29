@@ -28,9 +28,9 @@ const bidSchema = new mongoose.Schema(
     },
 
     materialDetails: {
-        required: true,
       type: String,
       trim: true,
+      required: [true, "Material details are required"],
       maxlength: [1000, "Material details cannot exceed 1000 characters"],
     },
 

@@ -53,6 +53,11 @@ const userSchema = new mongoose.Schema(
       type: Date,
       select: false,
     },
+    refreshToken: {
+      type: String,
+      select: false,
+      default: null,
+    },
 
     lastLoginAt: {
       type: Date,
@@ -63,13 +68,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
     versionKey: false,
     collection: "users",
-  }
+  },
 );
-
-
-userSchema.index({ email: 1 });
 
 const User = mongoose.model("User", userSchema);
 
 export default User;
-

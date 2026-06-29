@@ -30,5 +30,5 @@ export const createBidSchema = z.object({
 });
 
 export const updateBidStatusSchema = z.object({
-  status: z.enum(BID_STATUS),
+  status: z.enum([...BID_STATUS]),
 });

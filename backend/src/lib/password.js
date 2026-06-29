@@ -2,7 +2,7 @@ import { compare, hash } from "bcrypt";
 
 const SALTROUND = 10;
 
-export const Hashvalue = (value) => {
+export const hashPassword = (value) => {
   return hash(value, SALTROUND);
 };
 

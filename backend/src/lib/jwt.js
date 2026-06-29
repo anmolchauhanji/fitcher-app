@@ -13,9 +13,9 @@ export const generateRefreshToken = (payload)=>{
 }
 
 
-export const verifytoken = (token)=>{
+export const verifyToken = (token)=>{
     return jwt.verify(token,env.JWT_ACCESS_SECRET)
 }
-export const verifyrefreshtoken = (token)=>{
+export const verifyRefreshToken = (token)=>{
     return jwt.verify(token,env.JWT_REFRESH_SECRET)
 }

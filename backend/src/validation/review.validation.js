@@ -6,7 +6,7 @@ export const createReviewSchema = z.object({
 
   contractorId: z.string().min(1, "Contractor ID is required"),
 
-  reviewType: z.enum(REVIEW_TYPES),
+  reviewType: z.enum([...REVIEW_TYPES]),
 
   rating: z
     .number()

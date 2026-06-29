@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PROJECT_CATEGORIES } from "../constants/project-category.constant.js";
+import { CATEGORIES } from "../constants/category.constant.js";
 import { PROJECT_STATUS } from "../constants/project-status.constant.js";
 export const createProjectSchema = z.object({
   title: z
@@ -7,7 +7,7 @@ export const createProjectSchema = z.object({
     .min(5, "Title must be at least 5 characters")
     .max(100, "Title cannot exceed 100 characters"),
 
-  category: z.enum(PROJECT_CATEGORIES),
+  category: z.enum([...CATEGORIES]),
 
   description: z
     .string()
@@ -56,5 +56,5 @@ export const createProjectSchema = z.object({
 
 
 export const updateProjectStatusSchema = z.object({
-  status: z.enum(PROJECT_STATUS),
+  status: z.enum([...PROJECT_STATUS]),
 });

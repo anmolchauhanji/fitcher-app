@@ -1,81 +1,191 @@
-import crypto from "crypto";
 import ApiError from "../lib/ApiError.js";
-import { Comparevalue, Hashvalue } from "../lib/password.js";
-import { generateAccessToken, generateRefreshToken } from "../lib/jwt.js";
-import { User } from "../models/user.model.js";
+import { 
+  createUser, 
+  findUserByEmail,
+  findUserByEmailWithPassword,
+  findUserById,
+  updateUserById 
+} from "../repositories/user.repository.js";
+import { hashPassword, Comparevalue } from "../lib/password.js";
+import { generateOTP, hashOTP, compareOTP } from "../lib/otp.js";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../lib/jwt.js";
 import { sendVerificationEmail } from "./email.service.js";
-import { generateotp } from "../lib/otp.js";
 
-export const signupService = async ({ name, email, password }) => {
-  const normalizedEmail = email.trim().toLowerCase();
+export const signupService = async (userData) => {
+  const { name, email, password, role } = userData;
 
-  const existingUser = await User.findOne({ email: normalizedEmail });
+  const existingUser = await findUserByEmail(email);
+
   if (existingUser) {
-    throw new ApiError(409, "email already exists");
+    throw new ApiError(409, "User already exists");
   }
 
-  const hashedPassword = await Hashvalue(password);
-  // const verificationToken = crypto.randomBytes(32).toString("hex");
-  // const verificationTokenExpiry = Date.now() + 1000 * 60 * 60;
-  const otp = generateotp();
-  const otpexpiry = Date.now() + 1000 * 60 * 10;
-  const hashedotp = await Hashvalue(otp);
-  const user = await User.create({
+  const hashedPassword = await hashPassword(password);
+
+  const otp = generateOTP();
+console.log(otp);
+  const hashedOTP = await hashOTP(otp);
+
+  const user = await createUser({
     name,
-    email: normalizedEmail,
+    email,
     password: hashedPassword,
-    // verificationToken,
-    // verificationTokenExpiry,
-    emailVerificationOTP: hashedotp,
-    emailVerificationOTPExpiry: otpexpiry,
+    role,
+    emailVerificationOTP: hashedOTP,
+    emailVerificationOTPExpiry: new Date(Date.now() + 10 * 60 * 1000),
   });
+console.log("hased"+user.emailVerificationOTP);
 
-  await sendVerificationEmail(user.name, user.email, otp);
+  await sendVerificationEmail({
+    name,
+    email,
+    otp
+})
 
-  const accessToken = generateAccessToken({
-    id: user.id,
+  return {
+    message:
+      "Account created successfully. Please verify your email.",
+  };
+};
+
+export const verifyEmailService = async ({email, otp}) => {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const isMatch = await compareOTP(otp, user.emailVerificationOTP);
+
+  if (!isMatch) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  if (user.emailVerificationOTPExpiry < new Date()) {
+    throw new ApiError(400, "OTP has expired");
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationOTP = undefined;
+  user.emailVerificationOTPExpiry = undefined;
+
+  await user.save();
+
+  return {
+    message: "Email verified successfully",
+  };
+};
+
+export const resendOtpService = async ({email}) => {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.isEmailVerified) {
+    throw new ApiError(400, "Email already verified");
+  }
+
+  const otp = generateOTP();
+  const hashedOTP = await hashOTP(otp);
+
+  user.emailVerificationOTP = hashedOTP;
+  user.emailVerificationOTPExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+  await user.save();
+
+  await sendVerificationEmail({
+    name: user.name,
     email: user.email,
-  });
-  const refreshToken = generateRefreshToken({
-    id: user.id,
-    email: user.email,
+    otp
   });
 
   return {
-    user,
+    message: "OTP sent successfully",
+  };
+};
+
+export const loginService = async ({ email, password }) => {
+  const user = await findUserByEmailWithPassword(email);
+
+  if (!user) {
+    throw new ApiError(401, "Invalid email or password");
+  }
+
+  if (!user.isEmailVerified) {
+    throw new ApiError(403, "Please verify your email first");
+  }
+
+  const isPasswordValid = await Comparevalue(
+    password,
+    user.password
+  );
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid email or password");
+  }
+
+  const accessToken = generateAccessToken({
+    id: user._id,
+    role: user.role,
+  });
+
+  const refreshToken = generateRefreshToken({
+    id: user._id,
+    role: user.role,
+  });
+
+  await updateUserById(user._id, {
+    lastLoginAt: new Date(),
+  });
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
     accessToken,
     refreshToken,
   };
 };
 
-export const LoginService = async ({ email, password }) => {
-  const useremail = email.trim().toLowerCase();
-  const existingUser = await User.findOne({ email: useremail }).select(
-    "+password",
-  );
-  console.log(existingUser);
+export const refreshTokenService = async (req) => {
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
-  if (!existingUser) {
-    throw new ApiError(401, "user not found");
+  if (!refreshToken) {
+    throw new ApiError(401, "Refresh token is required");
   }
-  const ComparePassword = await Comparevalue(password, existingUser.password);
-  if (!ComparePassword) {
-    throw new ApiError(401, "Invalid password");
+
+  try {
+    const payload = verifyRefreshToken(refreshToken);
+    const user = await findUserById(payload.id);
+
+    if (!user) {
+      throw new ApiError(401, "User not found");
+    }
+
+    const accessToken = generateAccessToken({
+      id: user._id,
+      role: user.role,
+    });
+
+    return {
+      accessToken,
+    };
+  } catch (error) {
+    throw new ApiError(401, "Invalid refresh token");
   }
-  if (!existingUser.isEmailVerified) {
-    throw new ApiError(403, "Verify your email first");
-  }
-  const accessToken = generateAccessToken({
-    id: existingUser.id,
-    email: existingUser.email,
+};
+
+export const logoutService = async (userId) => {
+  await updateUserById(userId, {
+    refreshToken: null,
   });
-  const refreshToken = generateRefreshToken({
-    id: existingUser.id,
-    email: existingUser.email,
-  });
+
   return {
-    user: existingUser,
-    accessToken,
-    refreshToken,
+    message: "Logout successful",
   };
 };

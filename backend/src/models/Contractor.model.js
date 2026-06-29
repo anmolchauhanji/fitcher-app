@@ -8,12 +8,12 @@ import { SUBSCRIPTION_TIERS } from "../constants/subscription.constant.js";
     url: {
       type: String,
       trim: true,
-      require:true
+      required: true
     },
     publicId: {
       type: String,
       trim: true,
-      require:true
+      required: true
     },
   },
   { _id: false }
@@ -45,7 +45,6 @@ const contractorSchema = new mongoose.Schema(
 
     servicePinCodes: [
       {
-        index:true,
         type: String,
       },
     ],

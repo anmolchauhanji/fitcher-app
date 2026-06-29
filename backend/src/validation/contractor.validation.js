@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PROJECT_CATEGORIES } from "../constants/project-category.constant.js";
+import { CATEGORIES } from "../constants/category.constant.js";
 
 export const completeContractorProfileSchema = z.object({
   businessName: z
@@ -8,7 +8,7 @@ export const completeContractorProfileSchema = z.object({
     .max(100, "Business name cannot exceed 100 characters"),
 
   tradeCategories: z
-    .array(z.enum(PROJECT_CATEGORIES))
+    .array(z.enum([...CATEGORIES]))
     .min(1, "At least one trade category is required"),
 
   servicePinCodes: z

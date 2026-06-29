@@ -1,8 +1,8 @@
 export  const successResponse = (
     res,
-    data=null,
+    statusCode=200,
     message="success",
-    statusCode=200
+    data=null
 )=>{
     return res.status(statusCode).json({
         success:true,
@@ -12,13 +12,13 @@ export  const successResponse = (
 }
 
 
-export const failedresponse = (
+export const failedResponse = (
     res,
-    errors=null,
+    statusCode=500,
     message="Something went wrong",
-    statuscode=500
+    errors=null
 )=>{
-return res.status(statuscode).json({
+return res.status(statusCode).json({
 success:false,
 message,
 errors

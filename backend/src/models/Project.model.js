@@ -8,12 +8,12 @@ const documentSchema = new mongoose.Schema(
     url: {
       type: String,
       trim: true,
-      require: true,
+      required: true,
     },
     publicId: {
       type: String,
       trim: true,
-      require: true,
+      required: true,
     },
   },
   { _id: false },
@@ -120,7 +120,7 @@ const projectSchema = new mongoose.Schema(
 // Geo Index
 
 projectSchema.index({ location: "2dsphere" });
-projectSchema.index({ pincode: 1 });
+projectSchema.index({ "location.pinCode": 1 });
 // Compound Index
 projectSchema.index({ status: 1, expiresAt: 1 });
 

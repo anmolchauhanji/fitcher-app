@@ -1,0 +1,210 @@
+{
+  "info": {
+    "name": "Fitcher App API",
+    "description": "Complete API testing with sample data",
+    "version": "1.0"
+  },
+  "auth_data": {
+    "signup": {
+      "customer": {
+        "name": "Raj Kumar",
+        "email": "raj.kumar@example.com",
+        "password": "Password123!@",
+        "role": "customer"
+      },
+      "contractor": {
+        "name": "John Plumber",
+        "email": "john.plumber@example.com",
+        "password": "Password123!@",
+        "role": "contractor"
+      },
+      "admin": {
+        "name": "Admin User",
+        "email": "admin@fitcher.com",
+        "password": "Admin@123456",
+        "role": "admin"
+      }
+    },
+    "login": {
+      "customer": {
+        "email": "raj.kumar@example.com",
+        "password": "Password123!@"
+      },
+      "contractor": {
+        "email": "john.plumber@example.com",
+        "password": "Password123!@"
+      }
+    },
+    "verify_email": {
+      "email": "raj.kumar@example.com",
+      "otp": "123456"
+    },
+    "resend_otp": {
+      "email": "raj.kumar@example.com"
+    }
+  },
+  "project_data": {
+    "create_project": {
+      "title": "Modern Kitchen Renovation",
+      "category": "Carpenter",
+      "description": "Need to renovate my kitchen with new cabinets, countertops, and flooring. Budget is flexible for quality work. Timeline: 2-3 weeks",
+      "budget": {
+        "min": 50000,
+        "max": 150000
+      },
+      "location": {
+        "coordinates": [77.5946, 12.9716],
+        "address": "123, MG Road, Bangalore, Karnataka",
+        "pinCode": "560001"
+      },
+      "photos": [
+        {
+          "url": "https://example.com/kitchen1.jpg",
+          "publicId": "kitchen_image_1"
+        }
+      ],
+      "scope": "Complete kitchen overhaul with modern fixtures",
+      "expiresAt": "2026-07-29"
+    },
+    "create_project_2": {
+      "title": "Electrical Wiring Installation",
+      "category": "Electrician",
+      "description": "New house wiring needed. 3 BHK flat with all modern electrical requirements",
+      "budget": {
+        "min": 30000,
+        "max": 75000
+      },
+      "location": {
+        "coordinates": [77.6245, 12.9352],
+        "address": "45, Koramangala, Bangalore, Karnataka",
+        "pinCode": "560034"
+      },
+      "photos": [],
+      "scope": "Complete electrical wiring for 3 BHK",
+      "expiresAt": "2026-07-15"
+    },
+    "create_project_3": {
+      "title": "Bathroom Plumbing Work",
+      "category": "Plumber",
+      "description": "Bathroom renovation with new pipes, fixtures and waterproofing",
+      "budget": {
+        "min": 20000,
+        "max": 50000
+      },
+      "location": {
+        "coordinates": [77.5946, 12.9716],
+        "address": "Downtown Bangalore",
+        "pinCode": "560001"
+      },
+      "photos": [],
+      "scope": "Complete bathroom plumbing and installation",
+      "expiresAt": "2026-07-10"
+    }
+  },
+  "contractor_data": {
+    "complete_profile": {
+      "businessName": "Premium Plumbing Solutions",
+      "tradeCategories": ["Plumber", "Tile Installer"],
+      "servicePinCodes": ["560001", "560002", "560003", "560004"],
+      "portfolioImages": [
+        {
+          "url": "https://example.com/portfolio1.jpg",
+          "publicId": "plumbing_work_1"
+        },
+        {
+          "url": "https://example.com/portfolio2.jpg",
+          "publicId": "plumbing_work_2"
+        }
+      ],
+      "kycDocuments": {
+        "aadhar": {
+          "url": "https://example.com/aadhar.pdf",
+          "publicId": "aadhar_doc"
+        },
+        "pan": {
+          "url": "https://example.com/pan.pdf",
+          "publicId": "pan_doc"
+        }
+      },
+      "businessDescription": "Over 10 years of experience in plumbing works"
+    }
+  },
+  "bid_data": {
+    "create_bid": {
+      "projectId": "PROJECT_ID_HERE",
+      "totalCost": 75000,
+      "completionDays": 14,
+      "materialDetails": "We will use premium quality pipes (ISI certified), corrosion-resistant fittings, and modern fixtures. All materials will be sourced from authorized dealers.",
+      "warrantyTerms": "2 year warranty on all pipe works and fittings. 6 months warranty on labor",
+      "coverNote": "Our team has expertise in bathroom renovation. We ensure timely completion and quality workmanship. We provide free consultation and quotation."
+    },
+    "create_bid_2": {
+      "projectId": "PROJECT_ID_HERE",
+      "totalCost": 95000,
+      "completionDays": 21,
+      "materialDetails": "High-end wooden cabinets with German hinges, granite countertops, ceramic tiles for flooring, modern lighting fixtures",
+      "warrantyTerms": "3 year warranty on cabinet work, 1 year on installation",
+      "coverNote": "Expert team with 15+ years experience in kitchen renovations. Best quality guaranteed."
+    }
+  },
+  "bid_actions": {
+    "accept_bid": {
+      "status": "accepted"
+    },
+    "reject_bid": {
+      "status": "rejected"
+    },
+    "withdraw_bid": {
+      "status": "withdrawn"
+    }
+  },
+  "review_data": {
+    "customer_to_contractor": {
+      "projectId": "PROJECT_ID_HERE",
+      "contractorId": "CONTRACTOR_ID_HERE",
+      "reviewType": "customer_to_contractor",
+      "rating": 5,
+      "comment": "Excellent work! The contractor completed the project on time and the quality is outstanding. Very professional team. Highly recommended!"
+    },
+    "contractor_to_customer": {
+      "projectId": "PROJECT_ID_HERE",
+      "contractorId": "CONTRACTOR_ID_HERE",
+      "reviewType": "contractor_to_customer",
+      "rating": 4,
+      "comment": "Good customer, clear communication. Payment was made on time. Would work with them again."
+    },
+    "poor_review": {
+      "projectId": "PROJECT_ID_HERE",
+      "contractorId": "CONTRACTOR_ID_HERE",
+      "reviewType": "customer_to_contractor",
+      "rating": 2,
+      "comment": "Work was below expectations. Took longer than promised. Need to improve quality."
+    }
+  },
+  "test_users": {
+    "customer1": {
+      "id": "USER_ID",
+      "name": "Raj Kumar",
+      "email": "raj.kumar@example.com",
+      "role": "customer"
+    },
+    "customer2": {
+      "id": "USER_ID",
+      "name": "Priya Singh",
+      "email": "priya.singh@example.com",
+      "role": "customer"
+    },
+    "contractor1": {
+      "id": "CONTRACTOR_ID",
+      "name": "John Plumber",
+      "email": "john.plumber@example.com",
+      "role": "contractor"
+    },
+    "contractor2": {
+      "id": "CONTRACTOR_ID",
+      "name": "Expert Carpenter",
+      "email": "expert.carpenter@example.com",
+      "role": "contractor"
+    }
+  }
+}

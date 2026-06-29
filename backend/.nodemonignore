@@ -1,0 +1,10 @@
+node_modules/
+*.md
+*.json
+.env
+.env.local
+TEST_DATA.json
+API_TESTING_GUIDE.md
+.git/
+dist/
+build/
