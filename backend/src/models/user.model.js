@@ -4,71 +4,72 @@ import validator from "validator";
 const userSchema = new mongoose.Schema(
   {
     name: {
-      trim: true,
       type: String,
+      required: [true, "Name is required"],
+      trim: true,
       minlength: [2, "Name must be at least 2 characters"],
       maxlength: [50, "Name cannot exceed 50 characters"],
-      required: true,
     },
+
     email: {
-      trim: true,
       type: String,
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
-      required: true,
+      trim: true,
       validate: {
         validator: validator.isEmail,
-        message: "Please provide valid email address",
+        message: "Please provide a valid email address",
       },
     },
+
     password: {
       type: String,
       required: [true, "Password is required"],
-      minlength: [6, "password must be at least 6 characters"],
+      minlength: [8, "Password must be at least 8 characters"],
+      maxlength: [128, "Password cannot exceed 128 characters"],
       select: false,
     },
+
+    role: {
+      type: String,
+      enum: ["customer", "contractor", "admin"],
+      default: "customer",
+    },
+
     isEmailVerified: {
       type: Boolean,
       default: false,
     },
+
     emailVerificationOTP: {
+      default: null,
       type: String,
-      select: false,
+      select: false, // Store hashed OTP only
     },
 
     emailVerificationOTPExpiry: {
+      default: null,
       type: Date,
+      select: false,
     },
 
-  
-//     goal: {
-//     type: String,
-//     enum: [
-//         "fat_loss",
-//         "muscle_gain",
-//         "consistency"
-//     ],
-//     default: "consistency"
-// },
-//     currentStreak:{
-//       type:Number,
-//       default:0,
-//       min:0
-//     },
-//    totalXP:{
-//     type:Number,
-//     default:0,
-//     min:0
-// },
-//     level:{
-//       default:1,
-//       type:Number,
-//       min:1
-//     }
-
-    
+    lastLoginAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    versionKey: false,
+    collection: "users",
+  }
 );
 
-export const User = mongoose.model("User", userSchema);
+
+userSchema.index({ email: 1 });
+
+const User = mongoose.model("User", userSchema);
+
+export default User;
+
