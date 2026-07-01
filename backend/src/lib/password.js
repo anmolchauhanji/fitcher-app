@@ -6,10 +6,10 @@ export const hashPassword = (value) => {
   return hash(value, SALTROUND);
 };
 
-export const Comparevalue = async (value, hashedvalue) => {
-  if (!value || !hashedvalue) {
+export const comparePassword = async (value, hashedValue) => {
+  if (!value || !hashedValue) {
     return false;
   }
 
-  return compare(value, hashedvalue);
+  return compare(value, hashedValue);
 };

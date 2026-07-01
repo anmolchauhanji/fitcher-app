@@ -9,17 +9,23 @@ export const findUserById = async (userId) => {
 };
 
 export const findUserByEmail = async (email) => {
-  return await User.findOne({ email }).select(
+  const normalizedEmail = email?.trim()?.toLowerCase();
+
+  return await User.findOne({ email: normalizedEmail }).select(
     "+emailVerificationOTP +emailVerificationOTPExpiry"
-  );;
+  );
 };
 
 export const findUserByEmailWithPassword = async (email) => {
-  return await User.findOne({ email }).select("+password");
+  const normalizedEmail = email?.trim()?.toLowerCase();
+
+  return await User.findOne({ email: normalizedEmail }).select("+password");
 };
 
 export const findUserByEmailWithOTP = async (email) => {
-  return await User.findOne({ email }).select(
+  const normalizedEmail = email?.trim()?.toLowerCase();
+
+  return await User.findOne({ email: normalizedEmail }).select(
     "+emailVerificationOTP +emailVerificationOTPExpiry"
   );
 };

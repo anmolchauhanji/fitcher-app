@@ -1,30 +1,75 @@
 import ApiError from "../lib/ApiError.js";
+
 import {
   createContractor,
   findContractorById,
   findContractorByUserId,
   findContractorByFilter,
   updateContractorById,
-  deleteContractorById,
 } from "../repositories/contractor.repository.js";
 
-export const createContractorService = async (
+import {
+  findUserById,
+  updateUserById,
+} from "../repositories/user.repository.js";
+
+export const createContractorProfileService = async (
   userId,
   contractorData
 ) => {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
   const existingContractor = await findContractorByUserId(userId);
 
   if (existingContractor) {
     throw new ApiError(409, "Contractor profile already exists");
   }
 
-  return await createContractor({
+  const contractor = await createContractor({
     userId,
     ...contractorData,
   });
+
+  await updateUserById(userId, {
+    role: "contractor",
+  });
+
+  return contractor;
 };
 
-export const getContractorByIdService = async (contractorId) => {
+export const getMyContractorProfileService = async (userId) => {
+  const contractor = await findContractorByUserId(userId);
+
+  if (!contractor) {
+    throw new ApiError(404, "Contractor profile not found");
+  }
+
+  return contractor;
+};
+
+export const updateMyContractorProfileService = async (
+  userId,
+  updateData
+) => {
+  const contractor = await findContractorByUserId(userId);
+
+  if (!contractor) {
+    throw new ApiError(404, "Contractor profile not found");
+  }
+
+  return await updateContractorById(
+    contractor._id,
+    updateData
+  );
+};
+
+export const getContractorProfileService = async (
+  contractorId
+) => {
   const contractor = await findContractorById(contractorId);
 
   if (!contractor) {
@@ -34,33 +79,23 @@ export const getContractorByIdService = async (contractorId) => {
   return contractor;
 };
 
-export const getContractorsService = async (filter = {}) => {
-  return await findContractorByFilter(filter);
-};
-
-export const updateContractorService = async (
-  contractorId,
-  updateData
+export const searchContractorsService = async (
+  filters = {}
 ) => {
-  const contractor = await findContractorById(contractorId);
+  const query = {};
 
-  if (!contractor) {
-    throw new ApiError(404, "Contractor not found");
+  if (filters.trade) {
+    query.tradeCategories = filters.trade;
   }
 
-  return await updateContractorById(contractorId, updateData);
-};
-
-export const deleteContractorService = async (contractorId) => {
-  const contractor = await findContractorById(contractorId);
-
-  if (!contractor) {
-    throw new ApiError(404, "Contractor not found");
+  if (filters.pincode) {
+    query.servicePinCodes = filters.pincode;
   }
 
-  await deleteContractorById(contractorId);
+  if (filters.verificationStatus) {
+    query.verificationStatus =
+      filters.verificationStatus;
+  }
 
-  return {
-    message: "Contractor deleted successfully",
-  };
+  return await findContractorByFilter(query);
 };

@@ -26,15 +26,21 @@ export const completeContractorProfileSchema = z.object({
     )
     .optional(),
 
-  kycDocuments: z.object({
-    aadhar: z.object({
-      url: z.url("Invalid Aadhaar URL"),
-      publicId: z.string().min(1, "Aadhaar Public ID is required"),
-    }),
+  kycDocuments: z
+    .object({
+      aadhar: z
+        .object({
+          url: z.url("Invalid Aadhaar URL"),
+          publicId: z.string().min(1, "Aadhaar Public ID is required"),
+        })
+        .optional(),
 
-    pan: z.object({
-      url: z.url("Invalid PAN URL"),
-      publicId: z.string().min(1, "PAN Public ID is required"),
-    }),
-  }),
+      pan: z
+        .object({
+          url: z.url("Invalid PAN URL"),
+          publicId: z.string().min(1, "PAN Public ID is required"),
+        })
+        .optional(),
+    })
+    .optional(),
 });

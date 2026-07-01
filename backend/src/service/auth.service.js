@@ -2,19 +2,21 @@ import ApiError from "../lib/ApiError.js";
 import { 
   createUser, 
   findUserByEmail,
+  findUserByEmailWithOTP,
   findUserByEmailWithPassword,
   findUserById,
   updateUserById 
 } from "../repositories/user.repository.js";
-import { hashPassword, Comparevalue } from "../lib/password.js";
+import { hashPassword, comparePassword } from "../lib/password.js";
 import { generateOTP, hashOTP, compareOTP } from "../lib/otp.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../lib/jwt.js";
 import { sendVerificationEmail } from "./email.service.js";
 
 export const signupService = async (userData) => {
-  const { name, email, password, role } = userData;
+  const { name, email, password } = userData;
+  const normalizedEmail = email?.trim()?.toLowerCase();
 
-  const existingUser = await findUserByEmail(email);
+  const existingUser = await findUserByEmail(normalizedEmail);
 
   if (existingUser) {
     throw new ApiError(409, "User already exists");
@@ -26,21 +28,21 @@ export const signupService = async (userData) => {
 console.log(otp);
   const hashedOTP = await hashOTP(otp);
 
+  // Create user document only with user fields. Role defaults to 'customer' at signup.
   const user = await createUser({
     name,
-    email,
+    email: normalizedEmail,
     password: hashedPassword,
-    role,
+    role: 'customer',
     emailVerificationOTP: hashedOTP,
     emailVerificationOTPExpiry: new Date(Date.now() + 10 * 60 * 1000),
   });
-console.log("hased"+user.emailVerificationOTP);
-
+  console.log("hased"+user.emailVerificationOTP);
   await sendVerificationEmail({
     name,
-    email,
+    email: normalizedEmail,
     otp
-})
+  })
 
   return {
     message:
@@ -49,13 +51,24 @@ console.log("hased"+user.emailVerificationOTP);
 };
 
 export const verifyEmailService = async ({email, otp}) => {
-  const user = await findUserByEmail(email);
+  const normalizedEmail = email?.trim()?.toLowerCase();
+  const normalizedOtp = String(otp ?? "").trim();
+
+  const user = await findUserByEmailWithOTP(normalizedEmail);
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-  const isMatch = await compareOTP(otp, user.emailVerificationOTP);
+  if (!normalizedOtp) {
+    throw new ApiError(400, "OTP is required");
+  }
+
+  if (!user.emailVerificationOTP || !user.emailVerificationOTPExpiry) {
+    throw new ApiError(400, "No OTP found. Please request a new one.");
+  }
+
+  const isMatch = await compareOTP(normalizedOtp, user.emailVerificationOTP);
 
   if (!isMatch) {
     throw new ApiError(400, "Invalid OTP");
@@ -77,7 +90,8 @@ export const verifyEmailService = async ({email, otp}) => {
 };
 
 export const resendOtpService = async ({email}) => {
-  const user = await findUserByEmail(email);
+  const normalizedEmail = email?.trim()?.toLowerCase();
+  const user = await findUserByEmail(normalizedEmail);
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -113,11 +127,7 @@ export const loginService = async ({ email, password }) => {
     throw new ApiError(401, "Invalid email or password");
   }
 
-  if (!user.isEmailVerified) {
-    throw new ApiError(403, "Please verify your email first");
-  }
-
-  const isPasswordValid = await Comparevalue(
+  const isPasswordValid = await comparePassword(
     password,
     user.password
   );
@@ -126,27 +136,32 @@ export const loginService = async ({ email, password }) => {
     throw new ApiError(401, "Invalid email or password");
   }
 
-  const accessToken = generateAccessToken({
-    id: user._id,
-    role: user.role,
-  });
+  if (!user.isEmailVerified) {
+    throw new ApiError(
+      403,
+      "Please verify your email first"
+    );
+  }
 
-  const refreshToken = generateRefreshToken({
+  const payload = {
     id: user._id,
     role: user.role,
-  });
+  };
+
+  const accessToken = generateAccessToken(payload);
+
+  const refreshToken = generateRefreshToken(payload);
 
   await updateUserById(user._id, {
+    refreshToken,
     lastLoginAt: new Date(),
   });
 
+  user.password = undefined;
+  user.refreshToken = undefined;
+
   return {
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user,
     accessToken,
     refreshToken,
   };

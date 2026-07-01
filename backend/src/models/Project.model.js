@@ -83,6 +83,7 @@ const projectSchema = new mongoose.Schema(
         type: String,
         required: true,
         trim: true,
+        minlength: [6, "Pin code must be 6 digits"],
       },
 
       address: {

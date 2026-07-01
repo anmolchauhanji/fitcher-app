@@ -1,0 +1,59 @@
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:3000/api/v1';
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('accessToken');
+  if (token && token !== 'undefined') {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;
+
+export const authApi = {
+  signup: (data) => apiClient.post('/auth/signup', data),
+  login: (data) => apiClient.post('/auth/login', data),
+  verifyEmail: (data) => apiClient.post('/auth/verify-email', data),
+  resendOtp: (data) => apiClient.post('/auth/resend-otp', data),
+  logout: () => apiClient.post('/auth/logout'),
+};
+
+export const projectApi = {
+  searchProjects: (params) => apiClient.get('/projects/search', { params }),
+  getProjectDetails: (id) => apiClient.get(`/projects/${id}`),
+  createProject: (data) => apiClient.post('/projects', data),
+  getMyProjects: () => apiClient.get('/projects/me'),
+  updateProject: (id, data) => apiClient.patch(`/projects/${id}`, data),
+  closeProject: (id) => apiClient.patch(`/projects/${id}/close`),
+};
+
+export const contractorApi = {
+  createContractorProfile: (data) => apiClient.post('/contractors/profile', data),
+  getMyContractorProfile: () => apiClient.get('/contractors/me'),
+  updateMyContractorProfile: (data) => apiClient.patch('/contractors/me', data),
+  searchContractors: (params) => apiClient.get('/contractors/search', { params }),
+  getContractorById: (id) => apiClient.get(`/contractors/${id}`),
+};

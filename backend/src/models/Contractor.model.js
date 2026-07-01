@@ -49,14 +49,20 @@ const contractorSchema = new mongoose.Schema(
       },
     ],
 
-    portfolioImages: [
-     documentSchema
-    ],
+    portfolioImages: {
+      type: [documentSchema],
+      default: [],
+    },
 
     kycDocuments: {
-      aadhar: documentSchema,
-
-      pan: documentSchema,
+      aadhar: {
+        type: documentSchema,
+        required: false,
+      },
+      pan: {
+        type: documentSchema,
+        required: false,
+      },
     },
 
     verificationStatus: {

@@ -12,24 +12,16 @@ export const findContractorByUserId = async (userId) => {
   return await Contractor.findOne({ userId });
 };
 
-export const findContractorByVerificationStatus = async (status) => {
-  return await Contractor.find({ verificationStatus: status });
-};
-
-export const findContractorsByTradeCategory = async (category) => {
-  return await Contractor.find({
-    tradeCategories: category,
-  });
-};
-
-export const findContractorsByPinCode = async (pinCode) => {
-  return await Contractor.find({
-    servicePinCodes: pinCode,
-  });
-};
-
 export const findContractorByFilter = async (filter = {}) => {
   return await Contractor.find(filter);
+};
+
+export const existsContractor = async (filter = {}) => {
+  return await Contractor.exists(filter);
+};
+
+export const countContractors = async (filter = {}) => {
+  return await Contractor.countDocuments(filter);
 };
 
 export const updateContractorById = async (
@@ -44,8 +36,4 @@ export const updateContractorById = async (
       runValidators: true,
     }
   );
-};
-
-export const deleteContractorById = async (contractorId) => {
-  return await Contractor.findByIdAndDelete(contractorId);
 };
