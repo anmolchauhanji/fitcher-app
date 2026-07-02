@@ -1,11 +1,12 @@
 import { Router } from "express";
-
+import uploadRoutes from "./upload.routes.js";
 import authRoutes from "./auth.routes.js";
 import projectRoutes from "./project.routes.js";
 import contractorRoutes from "./contractor.routes.js";
 import bidRoutes from "./bid.routes.js";
 import reviewRoutes from "./review.routes.js";
-
+import dashboardRoutes from "./dashboard.routes.js";
+import workOrderRoutes from "./work-order.routes.js";
 const router = Router();
 
 router.use("/auth", authRoutes);
@@ -13,5 +14,10 @@ router.use("/projects", projectRoutes);
 router.use("/contractors", contractorRoutes);
 router.use("/bids", bidRoutes);
 router.use("/reviews", reviewRoutes);
-
+router.use("/dashboard", dashboardRoutes);
+router.use("/upload", uploadRoutes);
+router.use(
+    "/work-orders",
+    workOrderRoutes
+);
 export default router;

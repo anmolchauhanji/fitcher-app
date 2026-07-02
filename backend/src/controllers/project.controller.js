@@ -12,7 +12,7 @@ import {
 
 export const createProject = asyncHandler(async (req, res) => {
   const project = await createProjectService(
-    req.user.id,
+    req.user._id,
     req.body
   );
 
@@ -25,7 +25,7 @@ export const createProject = asyncHandler(async (req, res) => {
 });
 
 export const getMyProjects = asyncHandler(async (req, res) => {
-  const projects = await getMyProjectsService(req.user.id);
+  const projects = await getMyProjectsService(req.user._id);
 
   return successResponse(
     res,
@@ -61,7 +61,7 @@ export const getProjectById = asyncHandler(async (req, res) => {
 
 export const updateProject = asyncHandler(async (req, res) => {
   const project = await updateProjectService(
-    req.user.id,
+    req.user._id,
     req.params.projectId,
     req.body
   );
@@ -76,7 +76,7 @@ export const updateProject = asyncHandler(async (req, res) => {
 
 export const closeProject = asyncHandler(async (req, res) => {
   const project = await closeProjectService(
-    req.user.id,
+    req.user._id,
     req.params.projectId
   );
 
@@ -87,3 +87,17 @@ export const closeProject = asyncHandler(async (req, res) => {
     project
   );
 });
+
+export const getRecommendedProjects = asyncHandler(async (req, res) => {
+    const projects =
+      await getRecommendedProjectsService(
+        req.user.id
+      );
+
+    return successResponse(
+      res,
+      200,
+      "Recommended projects fetched successfully.",
+      projects
+    );
+  });

@@ -13,6 +13,7 @@ import {
   getMyBids,
   getProjectBids,
   acceptBid,
+  rejectBid,
   withdrawBid,
 } from "../controllers/bid.controller.js";
 
@@ -44,6 +45,13 @@ router.patch(
   authenticate,
   authorize("contractor"),
   withdrawBid
+);
+
+router.patch(
+  "/:bidId/reject",
+  authenticate,
+  authorize("customer"),
+  rejectBid
 );
 
 /*

@@ -39,3 +39,37 @@ export const updateProjectById = async (
     }
   );
 };
+
+export const findRecommendedProjects = async ({
+  categories,
+  pinCodes,
+}) => {
+  return await Project.find({
+    status: "open",
+
+    category: {
+      $in: categories,
+    },
+
+    pincode: {
+      $in: pinCodes,
+    },
+  }).sort({
+    createdAt: -1,
+  });
+};
+
+export const closeProjectById = async (projectId) => {
+  return await Project.findByIdAndUpdate(
+    projectId,
+    {
+      status: "completed",
+      completedAt: new Date(),
+    },
+    {
+      returnDocument: "after",
+      runValidators: true,
+    }
+  );
+};
+

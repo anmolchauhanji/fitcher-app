@@ -2,7 +2,7 @@ import { Router } from "express";
 
 import authenticate from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
-
+import authorize from "../middlewares/role.middleware.js";
 import {
   createProjectSchema,
   updateProjectStatusSchema,
@@ -15,6 +15,7 @@ import {
   getProjectById,
   updateProject,
   closeProject,
+  getRecommendedProjects,
 } from "../controllers/project.controller.js";
 
 const router = Router();
@@ -65,6 +66,14 @@ router.get(
 router.get(
   "/:projectId",
   getProjectById
+);
+
+
+router.get(
+  "/recommended",
+  authenticate,
+  authorize("contractor"),
+  getRecommendedProjects
 );
 
 export default router;

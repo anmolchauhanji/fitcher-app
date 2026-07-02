@@ -1,5 +1,5 @@
 import ApiError from "../lib/ApiError.js";
-
+import { createWorkOrderService } from "./work-order.service.js";
 import {
   createBid,
   findBidById,
@@ -92,31 +92,21 @@ export const createBidService = async (
   });
 };
 
-export const getMyBidsService = async (
-  userId
-) => {
-  const contractor =
-    await findContractorByUserId(userId);
+export const getMyBidsService = async (userId) => {
+  const contractor = await findContractorByUserId(userId);
 
   if (!contractor) {
-    throw new ApiError(
-      404,
-      "Contractor profile not found"
-    );
+    throw new ApiError(404, "Contractor profile not found");
   }
 
-  return await findBidByContractorId(
-    contractor._id
-  );
+  return await findBidByContractorId(contractor._id);
 };
 
-export const getProjectBidsService = async (
-  projectId
-) => {
+export const getProjectBidsService = async (projectId) => {
   return await findBidByProjectId(projectId);
 };
 
-export const acceptBidService = async (
+export const rejectBidService = async (
   bidId
 ) => {
   const bid = await findBidById(bidId);
@@ -125,6 +115,71 @@ export const acceptBidService = async (
     throw new ApiError(
       404,
       "Bid not found"
+    );
+  }
+
+  if (bid.status !== "pending") {
+    throw new ApiError(
+      400,
+      "Only pending bids can be rejected"
+    );
+  }
+
+  await updateBidById(bidId, {
+    status: "rejected",
+  });
+
+  return {
+    message: "Bid rejected successfully",
+  };
+};
+
+export const acceptBidService = async (
+  bidId,
+  userId
+) => {
+  const bid = await findBidById(bidId);
+
+  if (!bid) {
+    throw new ApiError(
+      404,
+      "Bid not found"
+    );
+  }
+
+  const project = await findProjectById(
+    bid.projectId
+  );
+
+  if (!project) {
+    throw new ApiError(
+      404,
+      "Project not found"
+    );
+  }
+
+  // Only project owner can accept
+  if (
+    project.customerId.toString() !==
+    userId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to accept this bid"
+    );
+  }
+
+  if (project.status !== "open") {
+    throw new ApiError(
+      400,
+      "Project is no longer accepting bids"
+    );
+  }
+
+  if (bid.status !== "pending") {
+    throw new ApiError(
+      400,
+      "Only pending bids can be accepted"
     );
   }
 
@@ -138,7 +193,9 @@ export const acceptBidService = async (
   await updateManyBids(
     {
       projectId: bid.projectId,
-      _id: { $ne: bid._id },
+      _id: {
+        $ne: bid._id,
+      },
     },
     {
       status: "rejected",
@@ -153,8 +210,14 @@ export const acceptBidService = async (
     }
   );
 
+  await createWorkOrderService({
+    project,
+    bid,
+  });
+
   return {
-    message: "Bid accepted successfully",
+    message:
+      "Bid accepted successfully",
   };
 };
 
@@ -184,3 +247,4 @@ export const withdrawBidService = async (
     }
   );
 };
+

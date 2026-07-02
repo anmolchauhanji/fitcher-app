@@ -40,6 +40,14 @@ export const createProjectSchema = z.object({
       .max(300, "Address cannot exceed 300 characters"),
   }),
 
+  expiresAt: z
+    .string()
+    .or(z.date())
+    .refine(
+      (value) => new Date(value) > new Date(),
+      "Expiry date must be in the future"
+    ),
+
   photos: z
     .array(
       z.object({

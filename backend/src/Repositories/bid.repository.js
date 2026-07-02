@@ -9,11 +9,26 @@ export const findBidById = async (bidId) => {
 };
 
 export const findBidByProjectId = async (projectId) => {
-  return await Bid.find({ projectId });
+  return await Bid.find({ projectId })
+    .populate({
+      path: "contractorId",
+      populate: {
+        path: "userId",
+        select: "name",
+      },
+      select: "businessName averageRating verificationStatus",
+    })
+    .populate({
+      path: "projectId",
+      select: "title",
+    });
 };
 
 export const findBidByContractorId = async (contractorId) => {
-  return await Bid.find({ contractorId });
+  return await Bid.find({ contractorId }).populate({
+    path: "projectId",
+    select: "title category location budget status createdAt",
+  });
 };
 
 export const findBidByProjectAndContractor = async (

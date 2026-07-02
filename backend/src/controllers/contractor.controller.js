@@ -11,7 +11,7 @@ import {
 
 export const createContractorProfile = asyncHandler(async (req, res) => {
   const contractor = await createContractorProfileService(
-    req.user.id,
+    req.user._id,
     req.body
   );
 
@@ -24,7 +24,7 @@ export const createContractorProfile = asyncHandler(async (req, res) => {
 });
 
 export const getMyContractorProfile = asyncHandler(async (req, res) => {
-  const contractor = await getMyContractorProfileService(req.user.id);
+  const contractor = await getMyContractorProfileService(req.user._id);
 
   return successResponse(
     res,
@@ -36,7 +36,7 @@ export const getMyContractorProfile = asyncHandler(async (req, res) => {
 
 export const updateMyContractorProfile = asyncHandler(async (req, res) => {
   const contractor = await updateMyContractorProfileService(
-    req.user.id,
+    req.user._id,
     req.body
   );
 

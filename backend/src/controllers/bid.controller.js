@@ -6,11 +6,12 @@ import {
   getMyBidsService,
   getProjectBidsService,
   acceptBidService,
+  rejectBidService,
   withdrawBidService,
 } from "../service/bid.service.js";
 
 export const createBid = asyncHandler(async (req, res) => {
-  const bid = await createBidService(req.user.id, req.body);
+  const bid = await createBidService(req.user._id, req.body);
 
   return successResponse(
     res,
@@ -21,7 +22,7 @@ export const createBid = asyncHandler(async (req, res) => {
 });
 
 export const getMyBids = asyncHandler(async (req, res) => {
-  const bids = await getMyBidsService(req.user.id);
+  const bids = await getMyBidsService(req.user._id);
 
   return successResponse(
     res,
@@ -46,6 +47,20 @@ export const getProjectBids = asyncHandler(async (req, res) => {
 
 export const acceptBid = asyncHandler(async (req, res) => {
   const result = await acceptBidService(
+    req.params.bidId,
+    req.user.id
+  );
+
+  return successResponse(
+    res,
+    200,
+    "Bid accepted successfully.",
+    result
+  );
+});
+
+export const rejectBid = asyncHandler(async (req, res) => {
+  const result = await rejectBidService(
     req.params.bidId
   );
 

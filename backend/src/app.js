@@ -40,20 +40,20 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "500mb" }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 200,
-  message: {
-    success: false,
-    message: "Too many requests, try again later.",
-  },
-});
+// const limiter = rateLimit({
+//   windowMs: 30 * 60 * 1000, // 15 min
+//   max: 200,
+//   message: {
+//     success: false,
+//     message: "Too many requests, try again later.",
+//   },
+// });
 
-app.use("/api", limiter);
+// app.use("/api", limiter);
 
 app.get("/", (req, res) => {
   res.json({

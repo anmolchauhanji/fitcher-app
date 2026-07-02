@@ -46,11 +46,38 @@ export const searchProjectsService = async (
   };
 
   if (filters.category) {
-    query.category = filters.category;
+    const categories = Array.isArray(filters.category)
+      ? filters.category
+      : filters.category.split(",").map((item) => item.trim()).filter(Boolean);
+
+    if (categories.length === 1) {
+      query.category = categories[0];
+    } else if (categories.length > 1) {
+      query.category = { $in: categories };
+    }
   }
 
   if (filters.pincode) {
-    query["location.pinCode"] = filters.pincode;
+    const pinCodes = Array.isArray(filters.pincode)
+      ? filters.pincode
+      : filters.pincode.split(",").map((item) => item.trim()).filter(Boolean);
+
+    if (pinCodes.length === 1) {
+      query["location.pinCode"] = pinCodes[0];
+    } else if (pinCodes.length > 1) {
+      query["location.pinCode"] = { $in: pinCodes };
+    }
+  }
+
+  if (filters.keyword) {
+    const searchValue = filters.keyword.trim();
+    if (searchValue) {
+      query.$or = [
+        { title: { $regex: searchValue, $options: "i" } },
+        { description: { $regex: searchValue, $options: "i" } },
+        { "location.address": { $regex: searchValue, $options: "i" } },
+      ];
+    }
   }
 
   return await findProjectByFilter(query);
@@ -134,3 +161,26 @@ export const closeProjectService = async (
     }
   );
 };
+
+export const getRecommendedProjectsService = async (
+  userId
+) => {
+  const contractor =
+    await findContractorByUserId(userId);
+
+  if (!contractor) {
+    throw new ApiError(
+      404,
+      "Contractor profile not found"
+    );
+  }
+
+  return await findRecommendedProjects({
+    categories:
+      contractor.tradeCategories,
+
+    pinCodes:
+      contractor.servicePinCodes,
+  });
+};
+

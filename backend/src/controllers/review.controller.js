@@ -11,7 +11,7 @@ import {
 
 export const createReview = asyncHandler(async (req, res) => {
   const review = await createReviewService(
-    req.user.id,
+    req.user._id,
     req.body
   );
 
