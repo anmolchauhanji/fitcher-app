@@ -7,14 +7,26 @@ import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import CreateProject from './pages/CreateProject';
 import ProjectDetails from './pages/ProjectDetails';
+import ProjectBids from './pages/ProjectBids';
 import MyProjects from './pages/MyProjects';
+import MyBids from './pages/MyBids';
 import ContractorProfile from './pages/ContractorProfile';
+import ContractorPublicProfile from './pages/ContractorPublicProfile';
+import Profile from './pages/Profile';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-background text-primary">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  return children;
+};
+
+const RoleProtectedRoute = ({ children, allowedRoles }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-background text-primary">Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  if (!allowedRoles.includes(user.role)) return <Navigate to="/dashboard" />;
   return children;
 };
 
@@ -39,25 +51,57 @@ function App() {
           <Route
             path="/create-project"
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['customer']}>
                 <CreateProject />
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             }
           />
           <Route
             path="/my-projects"
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['customer']}>
                 <MyProjects />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="/project/:id/bids"
+            element={
+              <RoleProtectedRoute allowedRoles={['customer']}>
+                <ProjectBids />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/contractors/:id"
+            element={
+              <ProtectedRoute>
+                <ContractorPublicProfile />
               </ProtectedRoute>
             }
           />
           <Route
             path="/contractor/profile"
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['contractor']}>
                 <ContractorProfile />
-              </ProtectedRoute>
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-bids"
+            element={
+              <RoleProtectedRoute allowedRoles={['contractor']}>
+                <MyBids />
+              </RoleProtectedRoute>
             }
           />
           <Route

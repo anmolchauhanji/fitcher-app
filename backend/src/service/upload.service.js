@@ -4,7 +4,7 @@ import {
   findContractorByUserId,
   updateContractorById,
 } from "../repositories/contractor.repository.js";
-import deleteImage from "../utils/deleteImage.js";
+// import deleteImage from "../utils/deleteImage.js";
 import {
   findProjectById,
   updateProjectById,

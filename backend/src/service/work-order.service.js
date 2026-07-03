@@ -3,6 +3,9 @@ import ApiError from "../lib/ApiError.js";
 import {
   createWorkOrder,
   findWorkOrderByProjectId,
+  findWorkOrdersByCustomer,
+  findWorkOrdersByContractor,
+  updateWorkOrderById,
 } from "../repositories/work-order.repository.js";
 
 export const createWorkOrderService =
@@ -39,4 +42,36 @@ export const createWorkOrderService =
       estimatedDays:
         bid.completionDays,
     });
+  };
+
+export const getMyCustomerWorkOrdersService =
+  async (customerId) => {
+    return await findWorkOrdersByCustomer(
+      customerId
+    );
+  };
+
+export const getMyContractorWorkOrdersService =
+  async (contractorId) => {
+    return await findWorkOrdersByContractor(
+      contractorId
+    );
+  };
+
+export const completeWorkOrderService =
+  async (workOrderId, userId) => {
+    const workOrder =
+      await updateWorkOrderById(workOrderId, {
+        status: "completed",
+        completedAt: new Date(),
+      });
+
+    if (!workOrder) {
+      throw new ApiError(
+        404,
+        "Work order not found."
+      );
+    }
+
+    return workOrder;
   };

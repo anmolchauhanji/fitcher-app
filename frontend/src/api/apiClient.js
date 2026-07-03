@@ -38,6 +38,7 @@ export const authApi = {
   login: (data) => apiClient.post('/auth/login', data),
   verifyEmail: (data) => apiClient.post('/auth/verify-email', data),
   resendOtp: (data) => apiClient.post('/auth/resend-otp', data),
+  refreshToken: () => apiClient.post('/auth/refresh-token'),
   logout: () => apiClient.post('/auth/logout'),
 };
 
@@ -56,4 +57,21 @@ export const contractorApi = {
   updateMyContractorProfile: (data) => apiClient.patch('/contractors/me', data),
   searchContractors: (params) => apiClient.get('/contractors/search', { params }),
   getContractorById: (id) => apiClient.get(`/contractors/${id}`),
+};
+
+export const bidApi = {
+  createBid: (data) => apiClient.post('/bids', data),
+  getMyBids: () => apiClient.get('/bids/me'),
+  getProjectBids: (projectId) => apiClient.get(`/bids/project/${projectId}`),
+  acceptBid: (bidId) => apiClient.patch(`/bids/${bidId}/accept`),
+  rejectBid: (bidId) => apiClient.patch(`/bids/${bidId}/reject`),
+  withdrawBid: (bidId) => apiClient.patch(`/bids/${bidId}/withdraw`),
+};
+
+export const reviewApi = {
+  createReview: (data) => apiClient.post('/reviews', data),
+  getReviews: (params) => apiClient.get('/reviews', { params }),
+  getReviewById: (id) => apiClient.get(`/reviews/${id}`),
+  updateReview: (id, data) => apiClient.patch(`/reviews/${id}`, data),
+  deleteReview: (id) => apiClient.delete(`/reviews/${id}`),
 };
