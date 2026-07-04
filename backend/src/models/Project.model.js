@@ -67,31 +67,49 @@ const projectSchema = new mongoose.Schema(
       },
     },
 
-    location: {
-      type: {
-        type: String,
-        enum: ["Point"],
-        default: "Point",
-      },
+ location: {
+  address: {
+    type: String,
+    required: true,
+    trim: true,
+  },
 
-      coordinates: {
-        type: [Number],
-        required: true,
-      },
+  city: {
+    type: String,
+    required: true,
+    trim: true,
+    index: true,
+  },
 
-      pinCode: {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: [6, "Pin code must be 6 digits"],
-      },
+  state: {
+    type: String,
+    required: true,
+    trim: true,
+  },
 
-      address: {
-        type: String,
-        required: true,
-        trim: true,
-      },
+  pinCode: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 6,
+    maxlength: 6,
+    // index: true,
+  },
+
+  coordinates: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point",
     },
+
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      required: true,
+      default: [0, 0],
+    },
+  },
+},
 
     photos: [documentSchema],
 
@@ -120,7 +138,9 @@ const projectSchema = new mongoose.Schema(
 
 // Geo Index
 
-projectSchema.index({ location: "2dsphere" });
+projectSchema.index({
+  "location.coordinates": "2dsphere",
+});
 projectSchema.index({ "location.pinCode": 1 });
 // Compound Index
 projectSchema.index({ status: 1, expiresAt: 1 });

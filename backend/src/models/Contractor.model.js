@@ -49,6 +49,47 @@ const contractorSchema = new mongoose.Schema(
       },
     ],
 
+    location: {
+  address: {
+    type: String,
+    trim: true,
+    required: true,
+  },
+
+  city: {
+    type: String,
+    trim: true,
+    required: true,
+    // index: true,
+  },
+
+  state: {
+    type: String,
+    trim: true,
+    required: true,
+  },
+
+  coordinates: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point",
+    },
+
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      required: true,
+      default: [0, 0],
+    },
+  },
+
+  serviceRadius: {
+    type: Number,
+    default: 20,
+    min: 1,
+    max: 100,
+  },
+},
     portfolioImages: {
       type: [documentSchema],
       default: [],
@@ -96,9 +137,13 @@ const contractorSchema = new mongoose.Schema(
     collection: "contractors",
   },
 );
-
+contractorSchema.index({
+  "location.coordinates": "2dsphere",
+});
 contractorSchema.index({ servicePinCodes: 1 });
-
+contractorSchema.index({
+  "location.city": 1,
+});
 const Contractor = mongoose.model("Contractor", contractorSchema);
 
 export default Contractor;

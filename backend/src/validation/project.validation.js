@@ -26,18 +26,19 @@ export const createProjectSchema = z.object({
     }),
 
   location: z.object({
-    coordinates: z
-      .array(z.number())
-      .length(2, "Coordinates must contain longitude and latitude"),
+    address: z.string().min(5).max(300),
 
-    pinCode: z
-      .string()
-      .regex(/^\d{6}$/, "Pin code must be exactly 6 digits"),
+    city: z.string().min(2),
 
-    address: z
-      .string()
-      .min(5, "Address must be at least 5 characters")
-      .max(300, "Address cannot exceed 300 characters"),
+    state: z.string().min(2),
+
+    pinCode: z.string().regex(/^\d{6}$/),
+
+    coordinates: z.object({
+      type: z.literal("Point"),
+
+      coordinates: z.array(z.number()).length(2),
+    }),
   }),
 
   expiresAt: z
@@ -45,7 +46,7 @@ export const createProjectSchema = z.object({
     .or(z.date())
     .refine(
       (value) => new Date(value) > new Date(),
-      "Expiry date must be in the future"
+      "Expiry date must be in the future",
     ),
 
   photos: z
@@ -53,15 +54,11 @@ export const createProjectSchema = z.object({
       z.object({
         url: z.url("Invalid image URL"),
 
-        publicId: z
-          .string()
-          .min(1, "Public ID is required"),
-      })
+        publicId: z.string().min(1, "Public ID is required"),
+      }),
     )
     .optional(),
 });
-
-
 
 export const updateProjectStatusSchema = z.object({
   status: z.enum([...PROJECT_STATUS]),

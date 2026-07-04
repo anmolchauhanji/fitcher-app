@@ -1,15 +1,5 @@
 import mongoose from "mongoose";
 
-export const NOTIFICATION_TYPES = [
-  "new_project",
-  "new_bid",
-  "bid_accepted",
-  "bid_rejected",
-  "project_completed",
-  "review_received",
-  "contractor_verified",
-];
-
 const notificationSchema = new mongoose.Schema(
   {
     receiverId: {
@@ -19,25 +9,44 @@ const notificationSchema = new mongoose.Schema(
       index: true,
     },
 
+    senderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    type: {
+      type: String,
+      enum: [
+        "NEW_PROJECT",
+        "NEW_BID",
+        "BID_ACCEPTED",
+        "BID_REJECTED",
+        "PROJECT_COMPLETED",
+        "PROFILE_VERIFIED",
+        "REVIEW_RECEIVED",
+      ],
+      required: true,
+    },
+
     title: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 150,
     },
 
     message: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 500,
     },
 
-    type: {
-      type: String,
-      enum: NOTIFICATION_TYPES,
-      required: true,
+    data: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
     },
-
-    referenceId: mongoose.Schema.Types.ObjectId,
 
     isRead: {
       type: Boolean,
@@ -47,9 +56,14 @@ const notificationSchema = new mongoose.Schema(
   {
     timestamps: true,
     versionKey: false,
-    collection: "notifications",
   }
 );
+
+notificationSchema.index({
+  receiverId: 1,
+  isRead: 1,
+  createdAt: -1,
+});
 
 export default mongoose.model(
   "Notification",

@@ -2,6 +2,10 @@ import asyncHandler from "../lib/asyncHandler.js";
 import { successResponse } from "../lib/response.js";
 
 import {
+    getNearbyContractorsService,
+  getNearbyVerifiedContractorsService,
+  getNearbyContractorsByCategoryService,
+  getTopRatedNearbyContractorsService,
   createContractorProfileService,
   getMyContractorProfileService,
   updateMyContractorProfileService,
@@ -71,3 +75,64 @@ export const searchContractors = asyncHandler(async (req, res) => {
     contractors
   );
 });
+
+
+export const getNearbyContractors =
+  asyncHandler(async (req, res) => {
+    const contractors =
+      await getNearbyContractorsService(
+        req.query
+      );
+
+    return successResponse(
+      res,
+      200,
+      "Nearby contractors fetched successfully.",
+      contractors
+    );
+  });
+
+export const getNearbyVerifiedContractors =
+  asyncHandler(async (req, res) => {
+    const contractors =
+      await getNearbyVerifiedContractorsService(
+        req.query
+      );
+
+    return successResponse(
+      res,
+      200,
+      "Verified contractors fetched successfully.",
+      contractors
+    );
+  });
+
+export const getNearbyContractorsByCategory =
+  asyncHandler(async (req, res) => {
+    const contractors =
+      await getNearbyContractorsByCategoryService(
+        req.query
+      );
+
+    return successResponse(
+      res,
+      200,
+      "Category contractors fetched successfully.",
+      contractors
+    );
+  });
+
+export const getTopRatedNearbyContractors =
+  asyncHandler(async (req, res) => {
+    const contractors =
+      await getTopRatedNearbyContractorsService(
+        req.query
+      );
+
+    return successResponse(
+      res,
+      200,
+      "Top rated contractors fetched successfully.",
+      contractors
+    );
+  });

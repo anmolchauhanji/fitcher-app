@@ -7,6 +7,7 @@ import bidRoutes from "./bid.routes.js";
 import reviewRoutes from "./review.routes.js";
 import dashboardRoutes from "./dashboard.routes.js";
 import workOrderRoutes from "./work-order.routes.js";
+import notificationRoutes from "./notification.routes.js";
 const router = Router();
 
 router.use("/auth", authRoutes);
@@ -16,8 +17,6 @@ router.use("/bids", bidRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/upload", uploadRoutes);
-router.use(
-    "/work-orders",
-    workOrderRoutes
-);
+router.use("/work-orders", workOrderRoutes);
+router.use("/notifications", notificationRoutes);
 export default router;

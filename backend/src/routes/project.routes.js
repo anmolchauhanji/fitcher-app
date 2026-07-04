@@ -11,11 +11,15 @@ import {
 import {
   createProject,
   getMyProjects,
+  
   searchProjects,
   getProjectById,
   updateProject,
   closeProject,
   getRecommendedProjects,
+   getNearbyProjects,
+  getNearbyProjectsByCategory,
+  getRecommendedContractors
 } from "../controllers/project.controller.js";
 
 const router = Router();
@@ -64,16 +68,33 @@ router.get(
 );
 
 router.get(
-  "/:projectId",
-  getProjectById
-);
-
-
-router.get(
   "/recommended",
   authenticate,
   authorize("contractor"),
   getRecommendedProjects
 );
+
+router.get(
+  "/nearby",
+  authenticate,
+  authorize("contractor"),
+  getNearbyProjects
+);
+
+router.get(
+  "/nearby/category",
+  authenticate,
+  authorize("contractor"),
+  getNearbyProjectsByCategory
+);
+
+router.get(
+  "/:projectId",
+  getProjectById
+);
+
+
+
+
 
 export default router;
