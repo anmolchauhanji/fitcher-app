@@ -1,5 +1,6 @@
 import ApiError from "../lib/ApiError.js";
 import { createWorkOrderService } from "./work-order.service.js";
+import { createChatService } from "./chat.service.js";
 import {
   createBid,
   findBidById,
@@ -160,7 +161,10 @@ export const acceptBidService = async (bidId, userId) => {
       status: "rejected",
     },
   );
-
+await createChatService({
+    project,
+    bid,
+});
   await updateProjectById(bid.projectId, {
     status: "in_progress",
     selectedBidId: bid._id,

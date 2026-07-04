@@ -8,8 +8,10 @@ import reviewRoutes from "./review.routes.js";
 import dashboardRoutes from "./dashboard.routes.js";
 import workOrderRoutes from "./work-order.routes.js";
 import notificationRoutes from "./notification.routes.js";
-const router = Router();
+import chatRoutes from "./chat.routes.js";
 
+const router = Router();
+router.use("/chats", chatRoutes);
 router.use("/auth", authRoutes);
 router.use("/projects", projectRoutes);
 router.use("/contractors", contractorRoutes);
