@@ -1,4 +1,5 @@
 import ApiError from "../lib/ApiError.js";
+import { getIO } from "../socket/socket.js";
 
 import {
   createChat,
@@ -154,6 +155,11 @@ export const sendMessageService =
           new Date(),
       }
     );
+
+    const io = getIO();
+    if (io) {
+      io.to(chatId.toString()).emit("new-message", message);
+    }
 
     return message;
 

@@ -37,6 +37,7 @@ app.use(
   cors({
     origin: true,
     credentials: true,
+    maxAge: 86400,
   })
 );
 

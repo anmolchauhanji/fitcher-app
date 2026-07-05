@@ -13,7 +13,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from ".
 import { sendVerificationEmail } from "./email.service.js";
 
 export const signupService = async (userData) => {
-  const { name, email, password } = userData;
+  const { name, email, password, role } = userData;
   const normalizedEmail = email?.trim()?.toLowerCase();
 
   const existingUser = await findUserByEmail(normalizedEmail);
@@ -25,15 +25,15 @@ export const signupService = async (userData) => {
   const hashedPassword = await hashPassword(password);
 
   const otp = generateOTP();
-console.log(otp);
+  console.log(otp);
   const hashedOTP = await hashOTP(otp);
 
-  // Create user document only with user fields. Role defaults to 'customer' at signup.
+  // Create user document with selected role. Defaults to 'customer' if not provided.
   const user = await createUser({
     name,
     email: normalizedEmail,
     password: hashedPassword,
-    role: 'customer',
+    role: role || 'customer',
     emailVerificationOTP: hashedOTP,
     emailVerificationOTPExpiry: new Date(Date.now() + 10 * 60 * 1000),
   });

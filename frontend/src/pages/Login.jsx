@@ -21,25 +21,28 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      const loggedInUser = await login(email, password);
+      const sessionData = await login(email, password);
+      let userObj = sessionData?.user;
 
       try {
         const pending = localStorage.getItem('pendingContractor');
-        if (pending && loggedInUser?.role !== 'contractor') {
+        if (pending) {
           const payload = JSON.parse(pending);
           await contractorApi.createContractorProfile(payload);
           localStorage.removeItem('pendingContractor');
-          const updatedUser = { ...loggedInUser, role: 'contractor' };
-          localStorage.setItem('user', JSON.stringify(updatedUser));
-          setUser(updatedUser);
+          userObj = { ...userObj, role: 'contractor' };
+          localStorage.setItem('user', JSON.stringify(userObj));
+          setUser(userObj);
         }
       } catch (err) {
         if (err.response?.status === 409) {
           localStorage.removeItem('pendingContractor');
+        } else {
+          throw err;
         }
       }
 
-      const redirectPath = loggedInUser?.user?.role === 'customer' ? '/my-projects' : '/dashboard';
+      const redirectPath = userObj?.role === 'customer' ? '/my-projects' : '/dashboard';
       navigate(redirectPath);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to login');

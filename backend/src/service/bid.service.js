@@ -165,6 +165,10 @@ await createChatService({
     project,
     bid,
 });
+  await createWorkOrderService({
+    project,
+    bid,
+  });
   await updateProjectById(bid.projectId, {
     status: "in_progress",
     selectedBidId: bid._id,

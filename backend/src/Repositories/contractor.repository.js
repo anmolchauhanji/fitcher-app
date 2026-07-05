@@ -5,7 +5,7 @@ export const createContractor = async (contractorData) => {
 };
 
 export const findContractorById = async (contractorId) => {
-  return await Contractor.findById(contractorId);
+  return await Contractor.findById(contractorId).populate('userId', 'name email');
 };
 
 export const findContractorByUserId = async (userId) => {

@@ -72,6 +72,18 @@ for (const contractor of recommendedContractors) {
   });
 }
 
+// Create notification for the customer who created the project
+await createNotificationService({
+  receiverId: userId,
+  senderId: userId,
+  type: "PROJECT_CREATED",
+  title: "Project Published Successfully",
+  message: `Your project "${savedProject.title}" has been successfully published and is now open for bidding.`,
+  data: {
+    projectId: savedProject._id,
+  },
+});
+
 return savedProject;
   
 };
@@ -138,6 +150,8 @@ export const getProjectByIdService = async (projectId) => {
     throw new ApiError(404, "Project not found");
   }
 
+  await project.populate("customerId", "name email");
+
   return project;
 };
 
@@ -203,6 +217,27 @@ export const getRecommendedContractorsService =
       project.category
     );
   };
+
+export const getRecommendedProjectsService = async (userId) => {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const recommendedProjects = await findRecommendedProjects({
+    categories: [],
+    pinCodes: [],
+  });
+
+  if (recommendedProjects.length > 0) {
+    return recommendedProjects;
+  }
+
+  return await findProjectByFilter({
+    status: "open",
+  });
+};
 
 export const getNearbyProjectsService = async ({
   longitude,

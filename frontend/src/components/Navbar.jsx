@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { notificationApi } from '../api/apiClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -13,7 +14,10 @@ import {
   Gavel,
   Search,
   Zap,
-  Briefcase
+  Briefcase,
+  MessageSquare,
+  Bell,
+  Trash2
 } from 'lucide-react';
 
 const getNavItems = (role) => {
@@ -21,6 +25,8 @@ const getNavItems = (role) => {
     return [
       { to: '/my-projects', label: 'My Projects', icon: FolderOpen, id: 'nav-my-projects' },
       { to: '/create-project', label: 'Create Project', icon: PlusCircle, id: 'nav-create-project' },
+      { to: '/work-orders', label: 'Work Orders', icon: Briefcase, id: 'nav-work-orders' },
+      { to: '/messages', label: 'Messages', icon: MessageSquare, id: 'nav-messages' },
       { to: '/profile', label: 'Profile', icon: UserCircle, id: 'nav-profile' },
     ];
   }
@@ -28,7 +34,9 @@ const getNavItems = (role) => {
   return [
     { to: '/dashboard', label: 'Marketplace', icon: LayoutDashboard, id: 'nav-dashboard' },
     { to: '/my-bids', label: 'My Bids', icon: Gavel, id: 'nav-my-bids' },
-    { to: '/profile', label: 'Profile', icon: UserCircle, id: 'nav-profile' },
+    { to: '/work-orders', label: 'Work Orders', icon: Briefcase, id: 'nav-work-orders' },
+    { to: '/messages', label: 'Messages', icon: MessageSquare, id: 'nav-messages' },
+    { to: '/contractor/profile', label: 'Profile', icon: UserCircle, id: 'nav-profile' },
   ];
 };
 
@@ -38,6 +46,62 @@ const Navbar = () => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await notificationApi.getNotifications();
+      const list = res.data?.data || [];
+      setNotifications(list);
+      setUnreadCount(list.filter((n) => n.status === 'unread').length);
+    } catch (err) {
+      console.error('Error fetching notifications', err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
+      return () => clearInterval(interval);
+    } else {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [user?._id]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationApi.markAllRead();
+      setUnreadCount(0);
+      setNotifications(prev => prev.map(n => ({ ...n, status: 'read' })));
+    } catch (err) {
+      console.error('Error marking all as read', err);
+    }
+  };
+
+  const handleMarkRead = async (id) => {
+    try {
+      await notificationApi.markRead(id);
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, status: 'read' } : n));
+    } catch (err) {
+      console.error('Error marking notification read', err);
+    }
+  };
+
+  const handleDeleteNotification = async (id) => {
+    try {
+      await notificationApi.deleteNotification(id);
+      setNotifications(prev => prev.filter(n => n._id !== id));
+      const unreadRes = await notificationApi.getUnreadCount();
+      setUnreadCount(unreadRes.data?.data || 0);
+    } catch (err) {
+      console.error('Error deleting notification', err);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -109,6 +173,83 @@ const Navbar = () => {
                     <PlusCircle size={16} /> New Project
                   </Link>
                 )}
+
+                {/* Notifications Bell */}
+                <div className="relative ml-2">
+                  <button
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all relative"
+                    id="nav-notifications-toggle"
+                  >
+                    <Bell size={18} />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-black font-black text-[9px] rounded-full flex items-center justify-center">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <AnimatePresence>
+                    {showNotifications && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 mt-3 w-80 glass rounded-2xl p-4 shadow-2xl border border-white/10 z-50 text-white max-h-[400px] overflow-y-auto"
+                      >
+                        <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-3">
+                          <h4 className="font-bold text-sm">Notifications</h4>
+                          {unreadCount > 0 && (
+                            <button 
+                              onClick={handleMarkAllRead} 
+                              className="text-[10px] text-primary hover:underline font-bold"
+                            >
+                              Mark all read
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="space-y-3">
+                          {notifications.length > 0 ? (
+                            notifications.map((n) => (
+                              <div 
+                                key={n._id} 
+                                className={`p-3 rounded-xl border flex gap-2 items-start transition-all ${
+                                  n.status === 'unread' ? 'bg-primary/5 border-primary/10' : 'bg-transparent border-transparent'
+                                }`}
+                              >
+                                <div className="flex-1 min-w-0 text-left">
+                                  <h5 className="font-bold text-xs">{n.title}</h5>
+                                  <p className="text-[11px] text-gray-400 mt-1 leading-normal">{n.message}</p>
+                                </div>
+                                <div className="flex flex-col gap-1.5 justify-start items-center">
+                                  {n.status === 'unread' && (
+                                    <button 
+                                      onClick={() => handleMarkRead(n._id)}
+                                      className="w-2 h-2 bg-primary rounded-full"
+                                      title="Mark read"
+                                    />
+                                  )}
+                                  <button 
+                                    onClick={() => handleDeleteNotification(n._id)}
+                                    className="text-gray-500 hover:text-red-400 p-0.5 rounded"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center text-xs text-gray-500 py-6">
+                              No notifications.
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
                 {/* User Identity Indicator (No text, just icon/color) */}
                 <div className={`ml-4 w-10 h-10 rounded-full flex items-center justify-center border-2 ${

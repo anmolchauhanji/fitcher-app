@@ -181,13 +181,13 @@ const ProjectBids = () => {
                   >
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                       <div className="space-y-4">
-                        <div className="flex items-center gap-3 text-gray-400 text-sm">
-                          <div className="w-11 h-11 rounded-3xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary font-black">
+                        <div className="flex items-center gap-3 text-gray-400 text-sm min-w-0">
+                          <div className="w-11 h-11 rounded-3xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary font-black flex-shrink-0">
                             {bid.contractorId?.userId?.name?.charAt(0) || 'C'}
                           </div>
-                          <div>
-                            <div className="font-semibold text-white">{bid.contractorId?.userId?.name || 'Unknown Contractor'}</div>
-                            <div className="text-sm text-gray-400">{bid.contractorId?.businessName || 'Business name unavailable'}</div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-white truncate max-w-[220px]">{bid.contractorId?.userId?.name || 'Unknown Contractor'}</div>
+                            <div className="text-sm text-gray-400 truncate max-w-[220px]">{bid.contractorId?.businessName || 'Business name unavailable'}</div>
                           </div>
                         </div>
                         <div className="text-white text-2xl font-black">₹{bid.totalCost?.toLocaleString()}</div>

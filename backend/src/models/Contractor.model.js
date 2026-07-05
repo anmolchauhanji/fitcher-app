@@ -50,46 +50,44 @@ const contractorSchema = new mongoose.Schema(
     ],
 
     location: {
-  address: {
-    type: String,
-    trim: true,
-    required: true,
-  },
+      address: {
+        type: String,
+        trim: true,
+        default: '',
+      },
 
-  city: {
-    type: String,
-    trim: true,
-    required: true,
-    // index: true,
-  },
+      city: {
+        type: String,
+        trim: true,
+        default: '',
+      },
 
-  state: {
-    type: String,
-    trim: true,
-    required: true,
-  },
+      state: {
+        type: String,
+        trim: true,
+        default: '',
+      },
 
-  coordinates: {
-    type: {
-      type: String,
-      enum: ["Point"],
-      default: "Point",
+      coordinates: {
+        type: {
+          type: String,
+          enum: ["Point"],
+          default: "Point",
+        },
+
+        coordinates: {
+          type: [Number], // [longitude, latitude]
+          default: [0, 0],
+        },
+      },
+
+      serviceRadius: {
+        type: Number,
+        default: 20,
+        min: 1,
+        max: 100,
+      },
     },
-
-    coordinates: {
-      type: [Number], // [longitude, latitude]
-      required: true,
-      default: [0, 0],
-    },
-  },
-
-  serviceRadius: {
-    type: Number,
-    default: 20,
-    min: 1,
-    max: 100,
-  },
-},
     portfolioImages: {
       type: [documentSchema],
       default: [],

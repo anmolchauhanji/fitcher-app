@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { contractorApi } from '../api/apiClient';
-import { Building2, User, Star, ShieldCheck, MapPin, Image as ImageIcon, BadgeCheck, Briefcase } from 'lucide-react';
+import { contractorApi, reviewApi } from '../api/apiClient';
+import { Building2, User, Star, ShieldCheck, MapPin, Image as ImageIcon, BadgeCheck, Briefcase, MessageSquare, AlertCircle } from 'lucide-react';
 
 const ContractorPublicProfile = () => {
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const response = await contractorApi.getContractorById(id);
-        setProfile(response.data?.data || null);
+        const [profileRes, reviewsRes] = await Promise.all([
+          contractorApi.getContractorById(id),
+          reviewApi.getReviews({ contractorId: id })
+        ]);
+        setProfile(profileRes.data?.data || null);
+        setReviews(reviewsRes.data?.data || []);
       } catch (err) {
         setError(err.response?.data?.message || 'Unable to load contractor profile');
       } finally {
@@ -119,6 +124,35 @@ const ContractorPublicProfile = () => {
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">Aadhaar Status: {profile.kycDocuments?.aadhar?.url ? 'Uploaded' : 'Pending'}</div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">PAN Status: {profile.kycDocuments?.pan?.url ? 'Uploaded' : 'Pending'}</div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-6 mt-8">
+          <div className="flex items-center gap-3 mb-6">
+            <MessageSquare size={18} className="text-primary" />
+            <h2 className="text-lg font-bold text-white">Client Reviews ({reviews.length})</h2>
+          </div>
+
+          {reviews.length > 0 ? (
+            <div className="space-y-6">
+              {reviews.map((rev) => (
+                <div key={rev._id} className="border-b border-white/5 pb-6 last:border-b-0 last:pb-0">
+                  <div className="flex justify-between items-start gap-4 mb-2">
+                    <div>
+                      <h4 className="font-bold text-gray-200 text-sm">{rev.reviewerId?.name || 'Customer'}</h4>
+                      <span className="text-[10px] text-gray-500">{new Date(rev.createdAt).toLocaleDateString('en-IN')}</span>
+                    </div>
+                    <div className="flex items-center gap-1 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-lg text-xs text-amber-300">
+                      <Star size={12} className="fill-amber-400 text-amber-400" /> {rev.rating}
+                    </div>
+                  </div>
+                  <p className="text-gray-400 text-sm leading-relaxed">{rev.comment}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm">No reviews submitted yet for this contractor.</p>
+          )}
         </div>
       </motion.div>
     </div>

@@ -75,3 +75,40 @@ export const reviewApi = {
   updateReview: (id, data) => apiClient.patch(`/reviews/${id}`, data),
   deleteReview: (id) => apiClient.delete(`/reviews/${id}`),
 };
+
+export const chatApi = {
+  getCustomerChats: () => apiClient.get('/chats/customer'),
+  getContractorChats: () => apiClient.get('/chats/contractor'),
+  getMessages: (chatId) => apiClient.get(`/chats/${chatId}/messages`),
+  sendMessage: (chatId, data) => apiClient.post(`/chats/${chatId}/messages`, data),
+  markChatRead: (chatId) => apiClient.patch(`/chats/${chatId}/read`),
+};
+
+export const workOrderApi = {
+  getCustomerWorkOrders: () => apiClient.get('/work-orders/customer'),
+  getContractorWorkOrders: () => apiClient.get('/work-orders/contractor'),
+  completeWorkOrder: (workOrderId) => apiClient.patch(`/work-orders/${workOrderId}/complete`),
+};
+
+export const notificationApi = {
+  getNotifications: () => apiClient.get('/notifications'),
+  getUnreadCount: () => apiClient.get('/notifications/unread-count'),
+  markAllRead: () => apiClient.patch('/notifications/read-all'),
+  markRead: (id) => apiClient.patch(`/notifications/${id}/read`),
+  deleteNotification: (id) => apiClient.delete(`/notifications/${id}`),
+};
+
+export const uploadApi = {
+  uploadAadhar: (formData) => apiClient.post('/upload/aadhar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  uploadPan: (formData) => apiClient.post('/upload/pan', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  uploadPortfolio: (formData) => apiClient.post('/upload/portfolio', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  uploadProjectImages: (projectId, formData) => apiClient.post(`/upload/project/${projectId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+};

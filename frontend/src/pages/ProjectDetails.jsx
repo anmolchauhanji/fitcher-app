@@ -142,16 +142,16 @@ const ProjectDetails = () => {
                 {project.status.replace('_', ' ')}
               </span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-black mb-8 leading-tight">{project.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-black mb-8 leading-tight break-words">{project.title}</h1>
             {location.state?.editBid && (
               <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
                 Your previous proposal was withdrawn. You can submit a fresh proposal below.
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-5 glass-card rounded-2xl flex items-center gap-4">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary"><MapPin size={20} /></div>
-                <div><p className="text-[10px] text-gray-500 font-bold uppercase">Location</p><p className="font-bold text-sm">{project.location?.address}</p></div>
+              <div className="p-5 glass-card rounded-2xl flex items-center gap-4 min-w-0">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary flex-shrink-0"><MapPin size={20} /></div>
+                <div className="min-w-0 flex-1"><p className="text-[10px] text-gray-500 font-bold uppercase">Location</p><p className="font-bold text-sm break-words">{project.location?.address}</p></div>
               </div>
               <div className="p-5 glass-card rounded-2xl flex items-center gap-4">
                 <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500"><Calendar size={20} /></div>
@@ -191,14 +191,14 @@ const ProjectDetails = () => {
                   <p className="text-white font-semibold">{project.totalBids || 0}</p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 mb-6">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 mb-6 break-words">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Address</p>
-                <p className="text-white font-semibold">{project.location?.address}</p>
+                <p className="text-white font-semibold break-words">{project.location?.address}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 min-w-0">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Customer Name</p>
-                  <p className="text-white font-semibold">{project.customerId?.name || project.customerId || 'Customer info unavailable'}</p>
+                  <p className="text-white font-semibold break-words">{project.customerId?.name || project.customerId || 'Customer info unavailable'}</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Project Creation Date</p>

@@ -24,6 +24,18 @@ const Signup = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const toggleTradeCategory = (category) => {
+    setContractorInfo((prev) => {
+      const selected = prev.tradeCategories.includes(category);
+      return {
+        ...prev,
+        tradeCategories: selected
+          ? prev.tradeCategories.filter((item) => item !== category)
+          : [...prev.tradeCategories, category],
+      };
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -43,7 +55,12 @@ const Signup = () => {
         localStorage.removeItem('pendingContractor');
       }
 
-      await authApi.signup({ name: form.name, email: form.email, password: form.password });
+      await authApi.signup({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role: form.role,
+      });
       navigate('/verify-email', { state: { email: form.email, role: form.role } });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create account');
@@ -210,22 +227,22 @@ const Signup = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-400 mb-2 ml-1" htmlFor="signup-trades">Trade Categories</label>
-                    <select
-                      id="signup-trades"
-                      required
-                      multiple
-                      className="w-full bg-background border border-border rounded-xl py-3 px-4 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all min-h-[160px]"
-                      value={contractorInfo.tradeCategories}
-                      onChange={(e) => {
-                        const selected = Array.from(e.target.selectedOptions).map((option) => option.value);
-                        setContractorInfo({ ...contractorInfo, tradeCategories: selected });
-                      }}
-                    >
-                      {CATEGORY_OPTIONS.map((category) => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                    <p className="text-[11px] text-gray-500 mt-1 ml-1">Select one or more categories</p>
+                    <div className="grid gap-2 max-h-72 overflow-y-auto rounded-3xl border border-border bg-background p-3">
+                      {CATEGORY_OPTIONS.map((category) => {
+                        const selected = contractorInfo.tradeCategories.includes(category);
+                        return (
+                          <button
+                            key={category}
+                            type="button"
+                            onClick={() => toggleTradeCategory(category)}
+                            className={`w-full rounded-2xl border px-3 py-3 text-left text-sm transition-all ${selected ? 'border-primary bg-primary/15 text-primary' : 'border-border bg-[#070A0F] text-gray-300 hover:border-white/20'}`}
+                          >
+                            {category}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-1 ml-1">Pick one or more categories</p>
                   </div>
 
                   <div>

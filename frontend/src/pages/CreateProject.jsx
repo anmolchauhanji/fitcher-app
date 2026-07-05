@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { projectApi } from '../api/apiClient';
+import { projectApi, uploadApi } from '../api/apiClient';
 import { 
   PlusCircle, 
   FileText, 
@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   CheckCircle,
   HelpCircle,
-  Clock
+  Clock,
+  UploadCloud
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -46,10 +47,15 @@ const CreateProject = () => {
     minBudget: '',
     maxBudget: '',
     address: '',
+    city: '',
+    state: '',
     pinCode: '',
     scope: '',
     expiresAt: '',
   });
+
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -69,11 +75,33 @@ const CreateProject = () => {
     }
     if (s === 3) {
       if (!form.address) newErrors.address = 'Detailed address is required';
+      if (!form.city) newErrors.city = 'City is required';
+      if (!form.state) newErrors.state = 'State is required';
       if (!form.pinCode || form.pinCode.length !== 6) newErrors.pinCode = 'Valid 6-digit pin code is required';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handlePhotoSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    setSelectedImages((prev) => [...prev, ...files]);
+    
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreviews((prev) => [...prev, reader.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removePhoto = (index) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const nextStep = () => {
@@ -98,6 +126,7 @@ const CreateProject = () => {
     if (!v1 || !v2 || !v3) {
       if (!v1) setStep(1);
       else if (!v2) setStep(2);
+      else if (!v3) setStep(3);
       return;
     }
 
@@ -105,7 +134,7 @@ const CreateProject = () => {
     setErrors({});
 
     try {
-      await projectApi.createProject({
+      const createResponse = await projectApi.createProject({
         title: form.title,
         category: form.category,
         description: form.description,
@@ -114,14 +143,28 @@ const CreateProject = () => {
           max: Number(form.maxBudget),
         },
         location: {
-          coordinates: [77.5946, 12.9716],
           address: form.address,
+          city: form.city,
+          state: form.state,
           pinCode: form.pinCode,
+          coordinates: {
+            type: 'Point',
+            coordinates: [77.5946, 12.9716],
+          },
         },
         scope: form.scope,
         expiresAt: new Date(form.expiresAt).toISOString(),
         photos: [],
       });
+
+      const newProject = createResponse.data.data;
+
+      if (selectedImages.length > 0) {
+        const formData = new FormData();
+        selectedImages.forEach((img) => formData.append('images', img));
+        await uploadApi.uploadProjectImages(newProject._id, formData);
+      }
+
       navigate('/my-projects', { state: { message: 'Project published successfully!' } });
     } catch (err) {
       setErrors({ server: err.response?.data?.message || 'Failed to create project' });
@@ -178,7 +221,7 @@ const CreateProject = () => {
          
          {/* Stepper Progress */}
          <div className="flex items-center gap-4 mt-12 w-full max-w-md">
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex-1 flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all duration-300 border ${
                   step === i ? 'bg-primary text-black border-primary ring-4 ring-primary/10' :
@@ -187,7 +230,7 @@ const CreateProject = () => {
                 }`}>
                   {step > i ? <CheckCircle size={20} /> : i}
                 </div>
-                {i < 3 && <div className={`flex-1 h-1 rounded-full ${step > i ? 'bg-emerald-500/30' : 'bg-surface border border-border'}`} />}
+                {i < 4 && <div className={`flex-1 h-1 rounded-full ${step > i ? 'bg-emerald-500/30' : 'bg-surface border border-border'}`} />}
               </div>
             ))}
          </div>
@@ -339,6 +382,32 @@ const CreateProject = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
+                    <label className="block text-sm font-bold text-gray-300 mb-3 ml-1 uppercase tracking-widest">City</label>
+                    <input 
+                      type="text"
+                      className={`w-full bg-surface border-2 ${errors.city ? 'border-red-500' : 'border-border'} rounded-2xl py-5 px-8 focus:border-primary outline-none transition-all text-white placeholder-gray-600`}
+                      placeholder="e.g. Bengaluru"
+                      value={form.city}
+                      onChange={(e) => setForm({...form, city: e.target.value})}
+                    />
+                    <InputError name="city" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-gray-300 mb-3 ml-1 uppercase tracking-widest">State</label>
+                    <input 
+                      type="text"
+                      className={`w-full bg-surface border-2 ${errors.state ? 'border-red-500' : 'border-border'} rounded-2xl py-5 px-8 focus:border-primary outline-none transition-all text-white placeholder-gray-600`}
+                      placeholder="e.g. Karnataka"
+                      value={form.state}
+                      onChange={(e) => setForm({...form, state: e.target.value})}
+                    />
+                    <InputError name="state" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
                     <label className="block text-sm font-bold text-gray-300 mb-3 ml-1 uppercase tracking-widest">Pin Code</label>
                     <input 
                       type="text"
@@ -367,6 +436,51 @@ const CreateProject = () => {
                 </div>
               </motion.div>
             )}
+
+            {step === 4 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-2">Upload Project Photos</h3>
+                  <p className="text-gray-400 text-sm mb-6">Select up to 10 photos of the area that needs work. Real photos help contractors provide highly accurate bids.</p>
+                  
+                  <label className="w-full border-2 border-dashed border-border hover:border-primary/40 rounded-[2rem] p-10 flex flex-col items-center justify-center cursor-pointer transition-all bg-surface/10 hover:bg-surface/20">
+                    <UploadCloud size={40} className="text-gray-500 mb-4" />
+                    <span className="text-sm font-black text-gray-300">Choose Images or Drag here</span>
+                    <span className="text-xs text-gray-500 mt-2">Supports JPG, PNG, WEBP (Max 5MB each)</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      multiple 
+                      className="hidden" 
+                      onChange={handlePhotoSelect} 
+                    />
+                  </label>
+                </div>
+
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-6">
+                    {imagePreviews.map((preview, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-border group bg-surface">
+                        <img src={preview} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(idx)}
+                          className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-600 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
           </AnimatePresence>
 
           <div className="pt-10 flex items-center justify-between border-t border-white/5">
@@ -380,7 +494,7 @@ const CreateProject = () => {
               </button>
             ) : <div />}
 
-            {step < 3 ? (
+            {step < 4 ? (
               <button 
                 type="button" 
                 onClick={nextStep}

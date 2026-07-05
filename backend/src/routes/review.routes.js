@@ -1,4 +1,5 @@
 import { Router } from "express";
+import authenticate from "../middlewares/auth.middleware.js";
 
 import {
   createReview,
@@ -10,14 +11,14 @@ import {
 
 const router = Router();
 
-router.post("/", createReview);
+router.post("/", authenticate, createReview);
 
 router.get("/", getReviews);
 
 router.get("/:reviewId", getReviewById);
 
-router.patch("/:reviewId", updateReview);
+router.patch("/:reviewId", authenticate, updateReview);
 
-router.delete("/:reviewId", deleteReview);
+router.delete("/:reviewId", authenticate, deleteReview);
 
 export default router;

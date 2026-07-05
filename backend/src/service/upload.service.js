@@ -22,7 +22,8 @@ export const uploadImage = (buffer, folder) => {
       },
       (error, result) => {
         if (error) {
-          return reject(new ApiError(500, "Image upload failed"));
+          console.error("Cloudinary upload_stream error details:", error);
+          return reject(new ApiError(500, `Image upload failed: ${error.message || error}`));
         }
 
         resolve({
@@ -97,18 +98,23 @@ export const uploadProjectImagesService = async (userId, projectId, images) => {
     throw new ApiError(404, "Project not found");
   }
 
+  console.log("uploadProjectImagesService validation comparison:", {
+    projectCustomerId: project.customerId,
+    projectCustomerIdStr: project.customerId.toString(),
+    userId: userId,
+    userIdStr: userId.toString(),
+    match: project.customerId.toString() === userId.toString(),
+  });
+
   if (project.customerId.toString() !== userId.toString()) {
     throw new ApiError(403, "Unauthorized");
   }
 
   return await updateProjectById(projectId, {
     $push: {
-      images: [
-        {
-          url: String,
-          publicId: String,
-        },
-      ],
+      photos: {
+        $each: images,
+      },
     },
   });
 };

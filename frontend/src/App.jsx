@@ -13,6 +13,8 @@ import MyBids from './pages/MyBids';
 import ContractorProfile from './pages/ContractorProfile';
 import ContractorPublicProfile from './pages/ContractorPublicProfile';
 import Profile from './pages/Profile';
+import WorkOrders from './pages/WorkOrders';
+import Messages from './pages/Messages';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children }) => {
@@ -109,6 +111,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProjectDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/work-orders"
+            element={
+              <ProtectedRoute>
+                <WorkOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <Messages />
               </ProtectedRoute>
             }
           />

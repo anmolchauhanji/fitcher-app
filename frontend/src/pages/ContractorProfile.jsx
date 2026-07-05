@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { contractorApi } from '../api/apiClient';
+import { contractorApi, uploadApi } from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { UserCheck, MapPin, ClipboardList, ImagePlus, Save, ShieldCheck, BadgeCheck, Star, Camera, UploadCloud, FileText, Building2 } from 'lucide-react';
 import { CATEGORIES } from '../constants/categories';
@@ -89,17 +89,83 @@ const ContractorProfile = () => {
     }
   };
 
-  const handleImageUpload = (file, field) => {
+  const [uploadingAadhar, setUploadingAadhar] = useState(false);
+  const [uploadingPan, setUploadingPan] = useState(false);
+  const [uploadingPortfolio, setUploadingPortfolio] = useState(false);
+
+  const handleAadharUpload = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const newImage = { url: reader.result, publicId: `local-${Date.now()}` };
+    setUploadingAadhar(true);
+    setMessage('');
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await uploadApi.uploadAadhar(formData);
+      const updatedProfile = res.data.data;
+      setProfile(updatedProfile);
       setForm((prev) => ({
         ...prev,
-        [field]: [...prev[field], newImage],
+        kycDocuments: {
+          ...prev.kycDocuments,
+          aadhar: updatedProfile.kycDocuments?.aadhar || { url: '', publicId: '' }
+        }
       }));
-    };
-    reader.readAsDataURL(file);
+      setMessage('Aadhaar document uploaded successfully.');
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Aadhaar upload failed.');
+    } finally {
+      setUploadingAadhar(false);
+    }
+  };
+
+  const handlePanUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPan(true);
+    setMessage('');
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await uploadApi.uploadPan(formData);
+      const updatedProfile = res.data.data;
+      setProfile(updatedProfile);
+      setForm((prev) => ({
+        ...prev,
+        kycDocuments: {
+          ...prev.kycDocuments,
+          pan: updatedProfile.kycDocuments?.pan || { url: '', publicId: '' }
+        }
+      }));
+      setMessage('PAN document uploaded successfully.');
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'PAN upload failed.');
+    } finally {
+      setUploadingPan(false);
+    }
+  };
+
+  const handlePortfolioUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploadingPortfolio(true);
+    setMessage('');
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append('images', file));
+      const res = await uploadApi.uploadPortfolio(formData);
+      const updatedProfile = res.data.data;
+      setProfile(updatedProfile);
+      setForm((prev) => ({
+        ...prev,
+        portfolioImages: updatedProfile.portfolioImages || []
+      }));
+      setMessage('Portfolio image(s) uploaded successfully.');
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Portfolio upload failed.');
+    } finally {
+      setUploadingPortfolio(false);
+    }
   };
 
   if (loading) {
@@ -191,27 +257,34 @@ const ContractorProfile = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-xl font-bold text-white">Portfolio Images</h2>
-                <p className="text-gray-400 text-sm">Upload a few project images to showcase your workmanship.</p>
+                <p className="text-gray-400 text-sm">Upload project images to showcase your workmanship (JPG/PNG/WEBP).</p>
               </div>
               <label className="inline-flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-2xl cursor-pointer text-sm text-gray-200 hover:bg-white/5 transition-all">
-                <UploadCloud size={18} /> Upload Portfolio Images
+                <UploadCloud size={18} /> {uploadingPortfolio ? 'Uploading...' : 'Upload Portfolio'}
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   className="hidden"
-                  onChange={(e) => handleImageUpload(e.target.files?.[0], 'portfolioImages')}
+                  onChange={handlePortfolioUpload}
+                  disabled={uploadingPortfolio}
                 />
               </label>
             </div>
+            {uploadingPortfolio && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div className="skeleton h-40 w-full rounded-3xl" />
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {form.portfolioImages.length > 0 ? (
                 form.portfolioImages.map((image, index) => (
-                  <div key={index} className="rounded-3xl overflow-hidden border border-border bg-surface h-40">
+                  <div key={index} className="rounded-3xl overflow-hidden border border-border bg-surface h-40 relative group">
                     <img src={image.url} alt={`Portfolio ${index + 1}`} className="w-full h-full object-cover" />
                   </div>
                 ))
               ) : (
-                <div className="rounded-3xl border border-border bg-background p-8 text-center text-gray-500">No portfolio images added.</div>
+                <div className="rounded-3xl border border-border bg-background p-8 text-center text-gray-500 col-span-2">No portfolio images added.</div>
               )}
             </div>
           </div>
@@ -221,57 +294,62 @@ const ContractorProfile = () => {
               <FileText size={18} className="text-primary" />
               <h2 className="text-xl font-bold text-white">KYC Documents</h2>
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">Aadhaar Card</label>
-                <input
-                  type="text"
-                  className="w-full bg-background border border-border rounded-xl py-3 px-4 focus:border-primary outline-none transition-all"
-                  value={form.kycDocuments.aadhar.url}
-                  onChange={(e) => setForm((prev) => ({
-                    ...prev,
-                    kycDocuments: { ...prev.kycDocuments, aadhar: { ...prev.kycDocuments.aadhar, url: e.target.value } },
-                  }))}
-                />
+              {/* Aadhaar Upload Box */}
+              <div className="rounded-2xl border border-border bg-background p-5 flex flex-col items-center justify-center min-h-[220px]">
+                <h3 className="text-sm font-semibold text-gray-300 mb-4">Aadhaar Card</h3>
+                {uploadingAadhar ? (
+                  <div className="skeleton w-full h-32 rounded-xl flex items-center justify-center text-xs text-primary font-bold">Uploading to Cloudinary...</div>
+                ) : form.kycDocuments?.aadhar?.url ? (
+                  <div className="w-full flex flex-col items-center">
+                    <div className="w-32 h-20 rounded-xl overflow-hidden border border-border mb-3">
+                      <img src={form.kycDocuments.aadhar.url} alt="Aadhaar preview" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-emerald-400 text-xs font-semibold mb-3 flex items-center gap-1">
+                      <BadgeCheck size={14} /> Aadhaar Verified
+                    </span>
+                    <label className="text-xs px-3 py-1.5 bg-surface border border-border rounded-xl text-gray-300 hover:text-white cursor-pointer hover:bg-white/5 transition-all">
+                      Change File
+                      <input type="file" accept="image/*" className="hidden" onChange={handleAadharUpload} />
+                    </label>
+                  </div>
+                ) : (
+                  <label className="w-full border-2 border-dashed border-border hover:border-primary/40 rounded-2xl p-6 flex flex-col items-center cursor-pointer transition-all bg-surface/10 hover:bg-surface/30">
+                    <UploadCloud size={28} className="text-gray-500 mb-2" />
+                    <span className="text-xs font-bold text-gray-300 text-center">Upload Aadhaar (JPG/PNG)</span>
+                    <span className="text-[10px] text-gray-500 mt-1">Max file size 5MB</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleAadharUpload} />
+                  </label>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">Aadhaar Public ID</label>
-                <input
-                  type="text"
-                  className="w-full bg-background border border-border rounded-xl py-3 px-4 focus:border-primary outline-none transition-all"
-                  value={form.kycDocuments.aadhar.publicId}
-                  onChange={(e) => setForm((prev) => ({
-                    ...prev,
-                    kycDocuments: { ...prev.kycDocuments, aadhar: { ...prev.kycDocuments.aadhar, publicId: e.target.value } },
-                  }))}
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">PAN Card</label>
-                <input
-                  type="text"
-                  className="w-full bg-background border border-border rounded-xl py-3 px-4 focus:border-primary outline-none transition-all"
-                  value={form.kycDocuments.pan.url}
-                  onChange={(e) => setForm((prev) => ({
-                    ...prev,
-                    kycDocuments: { ...prev.kycDocuments, pan: { ...prev.kycDocuments.pan, url: e.target.value } },
-                  }))}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">PAN Public ID</label>
-                <input
-                  type="text"
-                  className="w-full bg-background border border-border rounded-xl py-3 px-4 focus:border-primary outline-none transition-all"
-                  value={form.kycDocuments.pan.publicId}
-                  onChange={(e) => setForm((prev) => ({
-                    ...prev,
-                    kycDocuments: { ...prev.kycDocuments, pan: { ...prev.kycDocuments.pan, publicId: e.target.value } },
-                  }))}
-                />
+              {/* PAN Upload Box */}
+              <div className="rounded-2xl border border-border bg-background p-5 flex flex-col items-center justify-center min-h-[220px]">
+                <h3 className="text-sm font-semibold text-gray-300 mb-4">PAN Card</h3>
+                {uploadingPan ? (
+                  <div className="skeleton w-full h-32 rounded-xl flex items-center justify-center text-xs text-primary font-bold">Uploading to Cloudinary...</div>
+                ) : form.kycDocuments?.pan?.url ? (
+                  <div className="w-full flex flex-col items-center">
+                    <div className="w-32 h-20 rounded-xl overflow-hidden border border-border mb-3">
+                      <img src={form.kycDocuments.pan.url} alt="PAN preview" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-emerald-400 text-xs font-semibold mb-3 flex items-center gap-1">
+                      <BadgeCheck size={14} /> PAN Verified
+                    </span>
+                    <label className="text-xs px-3 py-1.5 bg-surface border border-border rounded-xl text-gray-300 hover:text-white cursor-pointer hover:bg-white/5 transition-all">
+                      Change File
+                      <input type="file" accept="image/*" className="hidden" onChange={handlePanUpload} />
+                    </label>
+                  </div>
+                ) : (
+                  <label className="w-full border-2 border-dashed border-border hover:border-primary/40 rounded-2xl p-6 flex flex-col items-center cursor-pointer transition-all bg-surface/10 hover:bg-surface/30">
+                    <UploadCloud size={28} className="text-gray-500 mb-2" />
+                    <span className="text-xs font-bold text-gray-300 text-center">Upload PAN Card (JPG/PNG)</span>
+                    <span className="text-[10px] text-gray-500 mt-1">Max file size 5MB</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePanUpload} />
+                  </label>
+                )}
               </div>
             </div>
           </div>

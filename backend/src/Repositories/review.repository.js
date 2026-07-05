@@ -9,7 +9,7 @@ export const findReviewById = async (reviewId) => {
 };
 
 export const findReviewByFilter = async (filter = {}) => {
-  return await Review.find(filter);
+  return await Review.find(filter).populate("reviewerId", "name");
 };
 
 export const findOneReview = async (filter = {}) => {
