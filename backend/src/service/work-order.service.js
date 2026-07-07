@@ -7,6 +7,7 @@ import {
   findWorkOrdersByContractor,
   updateWorkOrderById,
 } from "../repositories/work-order.repository.js";
+import { updateProjectById } from "../repositories/project.repository.js";
 
 export const createWorkOrderService =
   async ({
@@ -72,6 +73,10 @@ export const completeWorkOrderService =
         "Work order not found."
       );
     }
+
+    await updateProjectById(workOrder.projectId, {
+      status: "completed",
+    });
 
     return workOrder;
   };

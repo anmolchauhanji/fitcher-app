@@ -3,6 +3,7 @@ import { Router } from "express";
 import authenticate from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
 import authorize from "../middlewares/role.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
 import {
   createProjectSchema,
   updateProjectStatusSchema,
@@ -33,6 +34,7 @@ const router = Router();
 router.post(
   "/",
   authenticate,
+  upload.array("images", 10),
   validate(createProjectSchema),
   createProject
 );

@@ -11,7 +11,11 @@ import {
   updateMyContractorProfileService,
   getContractorProfileService,
   searchContractorsService,
+  
 } from "../service/contractor.service.js";
+
+import { deleteContractorKycService } from "../service/upload.service.js";
+
 
 export const createContractorProfile = asyncHandler(async (req, res) => {
   const contractor = await createContractorProfileService(
@@ -136,3 +140,10 @@ export const getTopRatedNearbyContractors =
       contractors
     );
   });
+
+export const deleteContractorKyc = asyncHandler(async (req, res) => {
+  const type = req.params.type;
+  const contractor = await deleteContractorKycService(req.user._id, type);
+
+  return successResponse(res, 200, 'KYC document removed successfully', contractor);
+});

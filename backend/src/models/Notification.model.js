@@ -19,6 +19,7 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       enum: [
         "NEW_PROJECT",
+        "PROJECT_CREATED",
         "NEW_BID",
         "BID_ACCEPTED",
         "BID_REJECTED",
@@ -63,6 +64,17 @@ notificationSchema.index({
   receiverId: 1,
   isRead: 1,
   createdAt: -1,
+});
+
+notificationSchema.virtual("status").get(function () {
+  return this.isRead ? "read" : "unread";
+});
+
+notificationSchema.set("toJSON", {
+  virtuals: true,
+});
+notificationSchema.set("toObject", {
+  virtuals: true,
 });
 
 export default mongoose.model(

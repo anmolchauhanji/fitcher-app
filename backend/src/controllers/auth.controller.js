@@ -106,3 +106,82 @@ export const logout = asyncHandler(async (req, res) => {
     result.message
   );
 });
+
+import { findUserByEmail } from "../repositories/user.repository.js";
+import { generateOTP, hashOTP, compareOTP } from "../lib/otp.js";
+import { sendVerificationEmail } from "../service/email.service.js";
+import ApiError from "../lib/ApiError.js";
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  const { name, email, otp } = req.body;
+  const user = req.user;
+
+  // 1. If only name is being updated or email is not provided/changed
+  if (!email || email.trim().toLowerCase() === user.email.toLowerCase()) {
+    if (name) {
+      user.name = name.trim();
+      await user.save();
+    }
+    return successResponse(res, 200, "Profile updated successfully", { user });
+  }
+
+  // 2. If email is being changed
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // Validate that email is not already taken by another user
+  const existingUser = await findUserByEmail(normalizedEmail);
+  if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+    throw new ApiError(409, "Email is already in use by another account");
+  }
+
+  // If OTP is provided, verify it
+  if (otp) {
+    if (user.pendingEmail !== normalizedEmail) {
+      throw new ApiError(400, "Invalid email change request. Please request a new OTP.");
+    }
+    if (!user.emailVerificationOTP || !user.emailVerificationOTPExpiry) {
+      throw new ApiError(400, "No OTP found. Please request a new one.");
+    }
+
+    const isMatch = await compareOTP(String(otp).trim(), user.emailVerificationOTP);
+    if (!isMatch) {
+      throw new ApiError(400, "Invalid OTP");
+    }
+    if (user.emailVerificationOTPExpiry < new Date()) {
+      throw new ApiError(400, "OTP has expired");
+    }
+
+    // OTP verified, update email and name if provided
+    user.email = normalizedEmail;
+    user.pendingEmail = null;
+    user.emailVerificationOTP = undefined;
+    user.emailVerificationOTPExpiry = undefined;
+    if (name) {
+      user.name = name.trim();
+    }
+    await user.save();
+
+    return successResponse(res, 200, "Email updated successfully", { user });
+  } else {
+    // Generate and send OTP for email change
+    const verificationOtp = generateOTP();
+    console.log(`Email change OTP for ${normalizedEmail}: ${verificationOtp}`);
+    const hashedOTP = await hashOTP(verificationOtp);
+
+    user.pendingEmail = normalizedEmail;
+    user.emailVerificationOTP = hashedOTP;
+    user.emailVerificationOTPExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+    await user.save();
+
+    await sendVerificationEmail({
+      name: name || user.name,
+      email: normalizedEmail,
+      otp: verificationOtp,
+    });
+
+    return successResponse(res, 200, "OTP sent to your new email. Please verify.", {
+      otpRequired: true,
+      pendingEmail: normalizedEmail
+    });
+  }
+});

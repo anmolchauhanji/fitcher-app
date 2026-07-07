@@ -47,6 +47,17 @@ export const deleteMessageById =
     );
   };
 
+export const countUnreadMessages =
+  async (chatId, userId) => {
+    return await Message.countDocuments({
+      chatId,
+      senderId: {
+        $ne: userId,
+      },
+      isRead: false,
+    });
+  };
+
 export const markMessagesAsRead =
   async (chatId, userId) => {
     return await Message.updateMany(

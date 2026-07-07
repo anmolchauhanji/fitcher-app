@@ -56,6 +56,7 @@ export const uploadAadharService = async (userId, image) => {
 
   return await updateContractorById(contractor._id, {
     "kycDocuments.aadhar": image,
+    verificationStatus: "pending",
   });
 };
 
@@ -72,6 +73,7 @@ export const uploadPanService = async (userId, image) => {
 
   return await updateContractorById(contractor._id, {
     "kycDocuments.pan": image,
+    verificationStatus: "pending",
   });
 };
 
@@ -117,4 +119,48 @@ export const uploadProjectImagesService = async (userId, projectId, images) => {
       },
     },
   });
+};
+
+export const deleteProjectImageService = async (userId, projectId, publicId) => {
+  const project = await findProjectById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
+  if (project.customerId.toString() !== userId.toString()) {
+    throw new ApiError(403, "Unauthorized");
+  }
+
+  // Remove from Cloudinary
+  await deleteImage(publicId);
+
+  // Remove from project photos array
+  return await updateProjectById(projectId, {
+    $pull: {
+      photos: { publicId },
+    },
+  });
+};
+
+export const deleteContractorKycService = async (userId, type) => {
+  const contractor = await findContractorByUserId(userId);
+
+  if (!contractor) {
+    throw new ApiError(404, "Contractor profile not found");
+  }
+
+  if (!['aadhar', 'pan'].includes(type)) {
+    throw new ApiError(400, 'Invalid KYC type');
+  }
+
+  const doc = contractor.kycDocuments?.[type];
+  if (doc?.publicId) {
+    await deleteImage(doc.publicId);
+  }
+
+  const update = { $unset: {} };
+  update.$unset[`kycDocuments.${type}`] = "";
+
+  return await updateContractorById(contractor._id, update);
 };

@@ -106,7 +106,7 @@ const contractorSchema = new mongoose.Schema(
 
     verificationStatus: {
       type: String,
-      enum: VERIFICATION_STATUS,
+      enum: Object.values(VERIFICATION_STATUS),
       default: "pending",
     },
 

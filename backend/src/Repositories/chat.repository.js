@@ -21,18 +21,24 @@ export const findChatsByCustomer = async (
 ) => {
   return await Chat.find({
     customerId,
-  }).sort({
-    lastMessageAt: -1,
-  });
+  })
+    .populate({ path: "contractorId", select: "businessName" })
+    .populate({ path: "customerId", select: "name" })
+    .sort({
+      lastMessageAt: -1,
+    });
 };
 
 export const findChatsByContractor =
   async (contractorId) => {
     return await Chat.find({
       contractorId,
-    }).sort({
-      lastMessageAt: -1,
-    });
+    })
+      .populate({ path: "contractorId", select: "businessName" })
+      .populate({ path: "customerId", select: "name" })
+      .sort({
+        lastMessageAt: -1,
+      });
   };
 
 export const updateChatById = async (

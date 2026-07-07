@@ -1,4 +1,5 @@
 import asyncHandler from "../lib/asyncHandler.js";
+import ApiError from "../lib/ApiError.js";
 import { successResponse } from "../lib/response.js";
 
 import {
@@ -14,8 +15,66 @@ import {
   getRecommendedContractorsService,
 } from "../service/project.service.js";
 
+import { uploadImage, uploadProjectImagesService } from "../service/upload.service.js";
+
 export const createProject = asyncHandler(async (req, res) => {
-  const project = await createProjectService(req.user._id, req.body);
+  // Normalize body when request comes from multipart/form-data (multer)
+  const body = { ...req.body };
+
+  // If nested objects were sent as JSON strings (common with FormData), parse them
+  try {
+    if (body.budget && typeof body.budget === 'string') {
+      body.budget = JSON.parse(body.budget);
+    }
+  } catch (e) {
+    // ignore parse errors
+  }
+
+  try {
+    if (body.location && typeof body.location === 'string') {
+      body.location = JSON.parse(body.location);
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Coerce numeric fields
+  try {
+    if (body.location && body.location.coordinates && Array.isArray(body.location.coordinates.coordinates)) {
+      body.location.coordinates.coordinates = body.location.coordinates.coordinates.map((c) => {
+        const num = typeof c === 'string' ? Number(c) : c;
+        return Number.isNaN(num) ? c : num;
+      });
+    }
+  } catch (e) {}
+
+  if (body.expiresAt && typeof body.expiresAt === 'string') {
+    // keep as ISO string
+    body.expiresAt = new Date(body.expiresAt).toISOString();
+  }
+
+  // Require at least one image in multipart request
+  if (!req.files || !req.files.length) {
+    throw new ApiError(400, "At least one project image is required");
+  }
+
+  // Create project first
+  const project = await createProjectService(req.user._id, body);
+
+  // If images were uploaded in the same multipart request, upload them to Cloudinary
+  if (req.files && req.files.length) {
+    const images = await Promise.all(
+      req.files.map((file) => uploadImage(file.buffer, "buildmatch/projects"))
+    );
+
+    // Attach uploaded images to project
+    await uploadProjectImagesService(req.user._id, project._id, images);
+
+    // Refresh project data
+    const refreshed = await getProjectByIdService(project._id);
+
+    return successResponse(res, 201, "Project created successfully.", refreshed);
+  }
 
   return successResponse(res, 201, "Project created successfully.", project);
 });

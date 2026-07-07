@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatDateDMY } from '../utils/formatDate';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { projectApi } from '../api/apiClient';
@@ -263,7 +264,7 @@ const MyProjects = () => {
                      <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-gray-500">
                         <Clock size={16} />
                      </div>
-                     <span>Posted on {new Date(project.createdAt).toLocaleDateString()}</span>
+                    <span>Posted on {formatDateDMY(project.createdAt)}</span>
                   </div>
                 </div>
               </div>

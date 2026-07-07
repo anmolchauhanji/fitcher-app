@@ -9,6 +9,7 @@ import {
   uploadPan,
   uploadPortfolio,
   uploadProjectImages,
+  deleteProjectImage,
 } from "../controllers/uploader.controller.js";
 
 const router = Router();
@@ -54,6 +55,13 @@ router.post(
   authorize("customer"),
   upload.array("images", 10),
   uploadProjectImages
+);
+
+router.delete(
+  "/project/:projectId/photo",
+  authenticate,
+  authorize("customer"),
+  deleteProjectImage
 );
 
 export default router;

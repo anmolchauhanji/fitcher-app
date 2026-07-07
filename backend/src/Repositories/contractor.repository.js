@@ -9,7 +9,7 @@ export const findContractorById = async (contractorId) => {
 };
 
 export const findContractorByUserId = async (userId) => {
-  return await Contractor.findOne({ userId });
+  return await Contractor.findOne({ userId }).populate('userId', 'name email');
 };
 
 export const findContractorByFilter = async (filter = {}) => {
@@ -35,7 +35,7 @@ export const updateContractorById = async (
       new: true,
       runValidators: true,
     }
-  );
+  ).populate('userId', 'name email');
 };
 
 

@@ -56,6 +56,7 @@ const CreateProject = () => {
 
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [categoryQuery, setCategoryQuery] = useState('');
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -87,10 +88,37 @@ const CreateProject = () => {
   const handlePhotoSelect = (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    
-    setSelectedImages((prev) => [...prev, ...files]);
-    
-    files.forEach((file) => {
+
+    // Filter only image files (client-side safeguard)
+    const validFiles = [];
+    let hadInvalid = false;
+    for (const file of files) {
+      if (file.type && file.type.startsWith('image/')) {
+        validFiles.push(file);
+      } else {
+        hadInvalid = true;
+      }
+    }
+
+    if (hadInvalid) {
+      setErrors((prev) => ({ ...prev, photos: 'Only image files are allowed' }));
+    } else {
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.photos;
+        return copy;
+      });
+    }
+
+    if (validFiles.length === 0) return;
+
+    // Limit total images to 10
+    setSelectedImages((prev) => {
+      const combined = [...prev, ...validFiles].slice(0, 10);
+      return combined;
+    });
+
+    validFiles.slice(0, 10 - selectedImages.length).forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
         setImagePreviews((prev) => [...prev, reader.result]);
@@ -130,39 +158,40 @@ const CreateProject = () => {
       return;
     }
 
+    // Require at least one image to publish
+    if (selectedImages.length === 0) {
+      setErrors({ photos: 'Please upload at least one project photo' });
+      setStep(4);
+      return;
+    }
+
     setLoading(true);
     setErrors({});
 
     try {
-      const createResponse = await projectApi.createProject({
-        title: form.title,
-        category: form.category,
-        description: form.description,
-        budget: {
-          min: Number(form.minBudget),
-          max: Number(form.maxBudget),
-        },
-        location: {
+      let newProject = null;
+
+      // Images are required and selected, send multipart FormData in a single request
+      if (selectedImages.length > 0) {
+        const formData = new FormData();
+        formData.append('title', form.title);
+        formData.append('category', form.category);
+        formData.append('description', form.description);
+        formData.append('budget', JSON.stringify({ min: Number(form.minBudget), max: Number(form.maxBudget) }));
+        formData.append('location', JSON.stringify({
           address: form.address,
           city: form.city,
           state: form.state,
           pinCode: form.pinCode,
-          coordinates: {
-            type: 'Point',
-            coordinates: [77.5946, 12.9716],
-          },
-        },
-        scope: form.scope,
-        expiresAt: new Date(form.expiresAt).toISOString(),
-        photos: [],
-      });
+          coordinates: { type: 'Point', coordinates: [77.5946, 12.9716] }
+        }));
+        formData.append('scope', form.scope);
+        formData.append('expiresAt', new Date(form.expiresAt).toISOString());
 
-      const newProject = createResponse.data.data;
-
-      if (selectedImages.length > 0) {
-        const formData = new FormData();
         selectedImages.forEach((img) => formData.append('images', img));
-        await uploadApi.uploadProjectImages(newProject._id, formData);
+
+        const createResponse = await projectApi.createProject(formData);
+        newProject = createResponse.data.data;
       }
 
       navigate('/my-projects', { state: { message: 'Project published successfully!' } });
@@ -275,17 +304,35 @@ const CreateProject = () => {
                   <label className="block text-sm font-bold text-gray-300 mb-3 ml-1 uppercase tracking-widest">Trade Category</label>
                   <div className="relative group">
                     <Tag className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors" size={20} />
-                    <select 
-                      className={`w-full bg-surface border-2 ${errors.category ? 'border-red-500' : 'border-border'} rounded-2xl py-5 pl-14 pr-10 focus:border-primary outline-none transition-all appearance-none text-white font-medium`}
-                      value={form.category}
-                      onChange={(e) => setForm({...form, category: e.target.value})}
-                    >
-                      <option value="">Select Category</option>
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
+                    <input
+                      type="text"
+                      value={categoryQuery}
+                      onChange={(e) => setCategoryQuery(e.target.value)}
+                      placeholder="Search category"
+                      className={`w-full bg-surface border-2 ${errors.category ? 'border-red-500' : 'border-border'} rounded-2xl py-5 pl-14 pr-6 focus:border-primary outline-none transition-all text-white placeholder-gray-600`}
+                    />
                   </div>
+                  <div className="mt-3 max-h-48 overflow-y-auto rounded-2xl border border-border bg-background p-2">
+                    {CATEGORIES.filter((cat) => cat.toLowerCase().includes(categoryQuery.toLowerCase())).map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          setForm({ ...form, category: cat });
+                          setCategoryQuery(cat);
+                        }}
+                        className={`mb-2 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-all ${form.category === cat ? 'bg-primary/10 text-primary' : 'text-gray-300 hover:bg-white/5'}`}
+                      >
+                        <span>{cat}</span>
+                        {form.category === cat && <CheckCircle size={16} />}
+                      </button>
+                    ))}
+                  </div>
+                  {form.category && (
+                    <div className="mt-3 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary inline-flex">
+                      Selected: {form.category}
+                    </div>
+                  )}
                   <InputError name="category" />
                 </div>
               </motion.div>
@@ -341,7 +388,7 @@ const CreateProject = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-gray-300 mb-3 ml-1 uppercase tracking-widest">Bidding Deadline</label>
+                    <label className="block text-sm font-bold text-gray-300 mb-3 ml-1 uppercase tracking-widest">Bidding Deadline (dd/mm/yyyy)</label>
                     <div className="relative group">
                       <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors" size={20} />
                       <input 
@@ -351,7 +398,10 @@ const CreateProject = () => {
                         onChange={(e) => setForm({...form, expiresAt: e.target.value})}
                       />
                     </div>
-                    <InputError name="expiresAt" />
+                      <InputError name="expiresAt" />
+                      {form.expiresAt && (
+                        <p className="text-gray-400 text-xs mt-2">Selected date: {new Date(form.expiresAt).toLocaleDateString('en-GB')}</p>
+                      )}
                   </div>
                 </div>
               </motion.div>
@@ -461,6 +511,7 @@ const CreateProject = () => {
                       onChange={handlePhotoSelect} 
                     />
                   </label>
+                  <InputError name="photos" />
                 </div>
 
                 {imagePreviews.length > 0 && (

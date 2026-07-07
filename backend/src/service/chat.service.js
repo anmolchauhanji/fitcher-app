@@ -14,6 +14,7 @@ import {
   createMessage,
   findMessagesByChatId,
   markMessagesAsRead,
+  countUnreadMessages,
 } from "../repositories/message.repository.js";
 
 import {
@@ -57,11 +58,14 @@ export const createChatService = async ({
 // Customer Chats
 export const getCustomerChatsService =
   async (userId) => {
+    const chats = await findChatsByCustomer(userId);
 
-    return await findChatsByCustomer(
-      userId
+    return await Promise.all(
+      chats.map(async (chat) => ({
+        ...(chat.toObject ? chat.toObject() : chat),
+        unreadCount: await countUnreadMessages(chat._id, userId),
+      }))
     );
-
   };
 
 
@@ -81,10 +85,16 @@ export const getContractorChatsService =
       );
     }
 
-    return await findChatsByContractor(
+    const chats = await findChatsByContractor(
       contractor._id
     );
 
+    return await Promise.all(
+      chats.map(async (chat) => ({
+        ...(chat.toObject ? chat.toObject() : chat),
+        unreadCount: await countUnreadMessages(chat._id, userId),
+      }))
+    );
   };
 
 

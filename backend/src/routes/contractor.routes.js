@@ -17,6 +17,7 @@ import {
   getNearbyVerifiedContractors,
   getNearbyContractorsByCategory,
   getTopRatedNearbyContractors,
+  deleteContractorKyc,
 } from "../controllers/contractor.controller.js";
 
 const router = Router();
@@ -41,6 +42,12 @@ router.patch(
   authenticate,
   validate(completeContractorProfileSchema),
   updateMyContractorProfile
+);
+
+router.delete(
+  "/me/kyc/:type",
+  authenticate,
+  deleteContractorKyc,
 );
 
 

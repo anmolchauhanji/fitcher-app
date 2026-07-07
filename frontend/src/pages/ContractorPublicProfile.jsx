@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { formatDateDMY } from '../utils/formatDate';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { contractorApi, reviewApi } from '../api/apiClient';
-import { Building2, User, Star, ShieldCheck, MapPin, Image as ImageIcon, BadgeCheck, Briefcase, MessageSquare, AlertCircle } from 'lucide-react';
+import { Building2, Star, ShieldCheck, MapPin, Image as ImageIcon, BadgeCheck, MessageSquare } from 'lucide-react';
 
 const ContractorPublicProfile = () => {
   const { id } = useParams();
@@ -65,14 +66,14 @@ const ContractorPublicProfile = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-6">
             <div className="flex items-center gap-3 mb-4">
-              <User size={18} className="text-primary" />
-              <h2 className="text-lg font-bold text-white">Owner Name</h2>
+              <BadgeCheck size={18} className="text-primary" />
+              <h2 className="text-lg font-bold text-white">Verification Status</h2>
             </div>
-            <p className="text-gray-300">{profile.userId?.name || 'Owner name unavailable'}</p>
+            <p className="text-gray-300">{String(profile.verificationStatus || 'pending').replace(/_/g, ' ')}</p>
           </div>
           <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Briefcase size={18} className="text-primary" />
+              <Star size={18} className="text-primary" />
               <h2 className="text-lg font-bold text-white">Completed Projects</h2>
             </div>
             <p className="text-gray-300">{profile.totalCompletedProjects || 0}</p>
@@ -121,8 +122,8 @@ const ContractorPublicProfile = () => {
           <h2 className="text-lg font-bold text-white mb-3">About</h2>
           <p className="text-gray-400 leading-relaxed">{profile.about || 'No additional details shared yet.'}</p>
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">Aadhaar Status: {profile.kycDocuments?.aadhar?.url ? 'Uploaded' : 'Pending'}</div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">PAN Status: {profile.kycDocuments?.pan?.url ? 'Uploaded' : 'Pending'}</div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">Verification: {String(profile.verificationStatus || 'pending').replace(/_/g, ' ')}</div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">Service Areas: {(profile.servicePinCodes || []).length > 0 ? profile.servicePinCodes.join(', ') : 'Not listed'}</div>
           </div>
         </div>
 
@@ -140,7 +141,7 @@ const ContractorPublicProfile = () => {
                   <div className="flex justify-between items-start gap-4 mb-2">
                     <div>
                       <h4 className="font-bold text-gray-200 text-sm">{rev.reviewerId?.name || 'Customer'}</h4>
-                      <span className="text-[10px] text-gray-500">{new Date(rev.createdAt).toLocaleDateString('en-IN')}</span>
+                      <span className="text-[10px] text-gray-500">{formatDateDMY(rev.createdAt)}</span>
                     </div>
                     <div className="flex items-center gap-1 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-lg text-xs text-amber-300">
                       <Star size={12} className="fill-amber-400 text-amber-400" /> {rev.rating}

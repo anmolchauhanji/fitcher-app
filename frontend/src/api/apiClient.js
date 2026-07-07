@@ -5,9 +5,6 @@ const API_BASE_URL = 'http://localhost:3000/api/v1';
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -40,6 +37,7 @@ export const authApi = {
   resendOtp: (data) => apiClient.post('/auth/resend-otp', data),
   refreshToken: () => apiClient.post('/auth/refresh-token'),
   logout: () => apiClient.post('/auth/logout'),
+  updateProfile: (data) => apiClient.patch('/auth/update-profile', data),
 };
 
 export const projectApi = {
@@ -55,6 +53,7 @@ export const contractorApi = {
   createContractorProfile: (data) => apiClient.post('/contractors/profile', data),
   getMyContractorProfile: () => apiClient.get('/contractors/me'),
   updateMyContractorProfile: (data) => apiClient.patch('/contractors/me', data),
+  deleteKyc: (type) => apiClient.delete(`/contractors/me/kyc/${type}`),
   searchContractors: (params) => apiClient.get('/contractors/search', { params }),
   getContractorById: (id) => apiClient.get(`/contractors/${id}`),
 };
@@ -99,16 +98,9 @@ export const notificationApi = {
 };
 
 export const uploadApi = {
-  uploadAadhar: (formData) => apiClient.post('/upload/aadhar', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  uploadPan: (formData) => apiClient.post('/upload/pan', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  uploadPortfolio: (formData) => apiClient.post('/upload/portfolio', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  uploadProjectImages: (projectId, formData) => apiClient.post(`/upload/project/${projectId}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  uploadAadhar: (formData) => apiClient.post('/upload/aadhar', formData),
+  uploadPan: (formData) => apiClient.post('/upload/pan', formData),
+  uploadPortfolio: (formData) => apiClient.post('/upload/portfolio', formData),
+  uploadProjectImages: (projectId, formData) => apiClient.post(`/upload/project/${projectId}`, formData),
+  deleteProjectImage: (projectId, publicId) => apiClient.delete(`/upload/project/${projectId}/photo`, { data: { publicId } }),
 };

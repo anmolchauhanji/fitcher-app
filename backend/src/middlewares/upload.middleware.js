@@ -3,15 +3,9 @@ import multer from "multer";
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-  ];
-
-  if (!allowedTypes.includes(file.mimetype)) {
-    return cb(new Error("Only JPG, PNG and WEBP images are allowed."));
+  // Accept any image/* MIME type (reject PDFs, docs, etc.)
+  if (!file.mimetype || !file.mimetype.startsWith('image/')) {
+    return cb(new Error('Only image files are allowed.'));
   }
 
   cb(null, true);

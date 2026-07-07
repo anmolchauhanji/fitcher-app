@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatDateDMY } from '../utils/formatDate';
 import { projectApi, contractorApi } from '../api/apiClient';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -128,12 +129,38 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="mt-6 md:mt-0 flex items-center gap-3">
-           <div className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border-2 ${
-              user?.role === 'customer' ? 'border-blue-500/20 bg-blue-500/5 text-blue-400' : 'border-primary/20 bg-primary/5 text-primary'
-           }`}>
-              {user?.role === 'customer' ? 'Premium Client' : 'Verified Partner'}
-           </div>
+        <div className="mt-6 md:mt-0 flex flex-col items-end gap-2">
+          {user?.role === 'customer' ? (
+            <div className="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border-2 border-blue-500/20 bg-blue-500/5 text-blue-400">
+              Premium Client
+            </div>
+          ) : (
+            <div className="flex flex-col items-end gap-1.5">
+              <div className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border-2 ${
+                contractorProfile?.verificationStatus === 'verified'
+                  ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400'
+                  : contractorProfile?.verificationStatus === 'rejected'
+                  ? 'border-red-500/20 bg-red-500/5 text-red-400'
+                  : contractorProfile?.verificationStatus === 'suspended'
+                  ? 'border-gray-500/20 bg-gray-500/5 text-gray-400'
+                  : 'border-amber-500/20 bg-amber-500/5 text-amber-400'
+              }`}>
+                {contractorProfile?.verificationStatus === 'verified'
+                  ? 'Verified Partner'
+                  : contractorProfile?.verificationStatus === 'rejected'
+                  ? 'Verification Rejected'
+                  : contractorProfile?.verificationStatus === 'suspended'
+                  ? 'Verification Suspended'
+                  : 'Verification Pending'}
+              </div>
+              <Link
+                to="/contractor/profile"
+                className="text-xs text-primary hover:underline font-bold flex items-center gap-0.5 transition-all opacity-80 hover:opacity-100"
+              >
+                Update Profile & KYC <ChevronRight size={12} />
+              </Link>
+            </div>
+          )}
         </div>
       </motion.div>
 
@@ -288,7 +315,7 @@ const Dashboard = () => {
                       {project.category}
                     </span>
                     <span className="text-gray-500 text-xs flex items-center gap-1.5 font-medium">
-                      <Clock size={14} /> {new Date(project.createdAt).toLocaleDateString()}
+                      <Clock size={14} /> {formatDateDMY(project.createdAt)}
                     </span>
                   </div>
 

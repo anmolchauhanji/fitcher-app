@@ -8,6 +8,7 @@ import {
   uploadPanService,
   uploadPortfolioService,
   uploadProjectImagesService,
+  deleteProjectImageService,
 } from "../service/upload.service.js";
 const FOLDERS = {
   aadhar: "buildmatch/contractors/aadhar",
@@ -274,4 +275,16 @@ export const uploadProjectImages =
 
     );
 
+  });
+
+  export const deleteProjectImage = asyncHandler(async (req, res) => {
+    const { publicId } = req.body || {};
+
+    if (!publicId) {
+      throw new ApiError(400, "publicId is required");
+    }
+
+    const project = await deleteProjectImageService(req.user.id, req.params.projectId, publicId);
+
+    return successResponse(res, 200, "Project image deleted successfully", project);
   });

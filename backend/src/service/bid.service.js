@@ -9,14 +9,20 @@ import {
   findBidByProjectAndContractor,
   updateBidById,
   updateManyBids,
+  findBidsByFilter,
 } from "../repositories/bid.repository.js";
 import { createNotificationService } from "./notification.service.js";
 import {
   findProjectById,
   updateProjectById,
+  findProjectByFilter,
 } from "../repositories/project.repository.js";
 
-import { findContractorByUserId } from "../repositories/contractor.repository.js";
+import {
+  findContractorById,
+  findContractorByUserId,
+} from "../repositories/contractor.repository.js";
+import { findUserById } from "../repositories/user.repository.js";
 
 export const createBidService = async (userId, bidData) => {
   const contractor = await findContractorByUserId(userId);
@@ -80,7 +86,16 @@ export const getMyBidsService = async (userId) => {
   const contractor = await findContractorByUserId(userId);
 
   if (!contractor) {
-    throw new ApiError(404, "Contractor profile not found");
+    const user = await findUserById(userId);
+
+    if (!user || user.role !== "customer") {
+      throw new ApiError(404, "Contractor profile not found");
+    }
+
+    const projects = await findProjectByFilter({ customerId: userId });
+    const projectIds = projects.map((project) => project._id);
+
+    return await findBidsByFilter({ projectId: { $in: projectIds } });
   }
 
   return await findBidByContractorId(contractor._id);
@@ -97,6 +112,12 @@ export const rejectBidService = async (bidId) => {
     throw new ApiError(404, "Bid not found");
   }
 
+  const project = await findProjectById(bid.projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
   if (bid.status !== "pending") {
     throw new ApiError(400, "Only pending bids can be rejected");
   }
@@ -104,17 +125,25 @@ export const rejectBidService = async (bidId) => {
   await updateBidById(bidId, {
     status: "rejected",
   });
-await createNotificationService({
-  receiverId: bid.contractorId,
-  senderId: bid.projectId.customerId, // agar populated ho
-  type: "BID_REJECTED",
-  title: "Bid Rejected",
-  message: "Your bid has been rejected.",
-  data: {
-    projectId: bid.projectId,
-    bidId: bid._id,
-  },
-});
+
+  const contractor = await findContractorById(bid.contractorId);
+
+  if (!contractor) {
+    throw new ApiError(404, "Contractor profile not found");
+  }
+
+  await createNotificationService({
+    receiverId: contractor.userId,
+    senderId: project.customerId,
+    type: "BID_REJECTED",
+    title: "Bid Rejected",
+    message: "Your bid has been rejected.",
+    data: {
+      projectId: bid.projectId,
+      bidId: bid._id,
+    },
+  });
+
   return {
     message: "Bid rejected successfully",
   };
@@ -174,18 +203,24 @@ await createChatService({
     selectedBidId: bid._id,
   });
 
- await createNotificationService({
-  receiverId: bid.contractorId,
-  senderId: userId,
-  type: "BID_ACCEPTED",
-  title: "Bid Accepted",
-  message:
-    "Congratulations! Your bid has been accepted.",
-  data: {
-    projectId: project._id,
-    bidId: bid._id,
-  },
-});
+  const contractor = await findContractorById(bid.contractorId);
+
+  if (!contractor) {
+    throw new ApiError(404, "Contractor profile not found");
+  }
+
+  await createNotificationService({
+    receiverId: contractor.userId,
+    senderId: userId,
+    type: "BID_ACCEPTED",
+    title: "Bid Accepted",
+    message:
+      "Congratulations! Your bid has been accepted.",
+    data: {
+      projectId: project._id,
+      bidId: bid._id,
+    },
+  });
 
   return {
     message: "Bid accepted successfully",

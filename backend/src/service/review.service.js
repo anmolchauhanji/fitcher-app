@@ -9,7 +9,16 @@ import {
 } from "../repositories/review.repository.js";
 
 import { findProjectById } from "../repositories/project.repository.js";
-import { findContractorById } from "../repositories/contractor.repository.js";
+import { findContractorById, updateContractorById } from "../repositories/contractor.repository.js";
+import Review from "../models/Review.model.js";
+
+const syncContractorAverageRating = async (contractorId) => {
+  const reviews = await Review.find({ contractorId }).select("rating");
+  const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+  const averageRating = reviews.length > 0 ? Number((totalRating / reviews.length).toFixed(1)) : 0;
+
+  await updateContractorById(contractorId, { averageRating });
+};
 
 export const createReviewService = async (
   reviewerId,
@@ -49,10 +58,14 @@ export const createReviewService = async (
     );
   }
 
-  return await createReview({
+  const review = await createReview({
     ...reviewData,
     reviewerId,
   });
+
+  await syncContractorAverageRating(review.contractorId);
+
+  return review;
 };
 
 export const getReviewByIdService = async (reviewId) => {
@@ -79,7 +92,10 @@ export const updateReviewService = async (
     throw new ApiError(404, "Review not found");
   }
 
-  return await updateReview(reviewId, updateData);
+  const updatedReview = await updateReview(reviewId, updateData);
+  await syncContractorAverageRating(updatedReview.contractorId);
+
+  return updatedReview;
 };
 
 export const deleteReviewService = async (reviewId) => {
@@ -90,6 +106,7 @@ export const deleteReviewService = async (reviewId) => {
   }
 
   await deleteReview(reviewId);
+  await syncContractorAverageRating(review.contractorId);
 
   return {
     message: "Review deleted successfully",

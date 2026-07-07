@@ -29,7 +29,9 @@ const Messages = () => {
       const res = user.role === 'customer' 
         ? await chatApi.getCustomerChats() 
         : await chatApi.getContractorChats();
-      setChats(res.data?.data || []);
+      const list = res.data?.data || [];
+      const sorted = [...list].sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0));
+      setChats(sorted);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load conversations.');
     } finally {
@@ -116,6 +118,8 @@ const Messages = () => {
     }
   };
 
+  const getUnreadCount = (chat) => Number(chat.unreadCount || 0);
+
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -161,9 +165,14 @@ const Messages = () => {
                     {user.role === 'customer' ? <Building2 size={16} /> : <User size={16} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm truncate text-white">
-                      {getChatPartnerName(chat)}
-                    </h4>
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-bold text-sm truncate text-white">
+                        {getChatPartnerName(chat)}
+                      </h4>
+                      {getUnreadCount(chat) > 0 && (
+                        <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-black">{getUnreadCount(chat)}</span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 truncate mt-1">
                       {chat.lastMessage || 'No messages yet'}
                     </p>

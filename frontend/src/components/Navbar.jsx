@@ -50,12 +50,22 @@ const Navbar = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const getNotificationRedirect = (notification) => {
+    const data = notification?.data || {};
+    if (data.projectId) return `/project/${data.projectId}`;
+    if (data.bidId) return `/my-bids`;
+    if (data.reviewId) return `/work-orders`;
+    if (data.chatId) return '/messages';
+    return '/dashboard';
+  };
+
   const fetchNotifications = async () => {
     try {
       const res = await notificationApi.getNotifications();
       const list = res.data?.data || [];
-      setNotifications(list);
-      setUnreadCount(list.filter((n) => n.status === 'unread').length);
+      const sorted = [...list].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      setNotifications(sorted);
+      setUnreadCount(sorted.filter((n) => n.isRead !== true).length);
     } catch (err) {
       console.error('Error fetching notifications', err);
     }
@@ -92,12 +102,20 @@ const Navbar = () => {
     }
   };
 
+  const handleNotificationClick = async (notification) => {
+    if (notification.isRead !== true) {
+      await handleMarkRead(notification._id);
+    }
+    setShowNotifications(false);
+    navigate(getNotificationRedirect(notification));
+  };
+
   const handleDeleteNotification = async (id) => {
     try {
       await notificationApi.deleteNotification(id);
       setNotifications(prev => prev.filter(n => n._id !== id));
       const unreadRes = await notificationApi.getUnreadCount();
-      setUnreadCount(unreadRes.data?.data || 0);
+      setUnreadCount(unreadRes.data?.data?.unreadCount || 0);
     } catch (err) {
       console.error('Error deleting notification', err);
     }
@@ -211,35 +229,52 @@ const Navbar = () => {
 
                         <div className="space-y-3">
                           {notifications.length > 0 ? (
-                            notifications.map((n) => (
-                              <div 
-                                key={n._id} 
-                                className={`p-3 rounded-xl border flex gap-2 items-start transition-all ${
-                                  n.status === 'unread' ? 'bg-primary/5 border-primary/10' : 'bg-transparent border-transparent'
-                                }`}
-                              >
-                                <div className="flex-1 min-w-0 text-left">
-                                  <h5 className="font-bold text-xs">{n.title}</h5>
-                                  <p className="text-[11px] text-gray-400 mt-1 leading-normal">{n.message}</p>
-                                </div>
-                                <div className="flex flex-col gap-1.5 justify-start items-center">
-                                  {n.status === 'unread' && (
-                                    <button 
-                                      onClick={() => handleMarkRead(n._id)}
-                                      className="w-2 h-2 bg-primary rounded-full"
-                                      title="Mark read"
-                                    />
-                                  )}
-                                  <button 
-                                    onClick={() => handleDeleteNotification(n._id)}
-                                    className="text-gray-500 hover:text-red-400 p-0.5 rounded"
-                                    title="Delete"
+                            notifications.map((n) => {
+                              const isUnread = n.status === 'unread' || n.isRead !== true;
+                              return (
+                                <div
+                                  key={n._id}
+                                  className={`w-full rounded-xl border p-3 transition-all ${
+                                    isUnread ? 'bg-primary/5 border-primary/10' : 'bg-transparent border-transparent'
+                                  }`}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => handleNotificationClick(n)}
+                                    className="flex w-full items-start gap-2 text-left"
                                   >
-                                    <Trash2 size={12} />
+                                    <div className="flex-1 min-w-0 text-left">
+                                      <h5 className="font-bold text-xs">{n.title}</h5>
+                                      <p className="mt-1 text-[11px] leading-normal text-gray-400">{n.message}</p>
+                                    </div>
                                   </button>
+                                  <div className="mt-2 flex items-center justify-end gap-2">
+                                    {isUnread && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleMarkRead(n._id);
+                                        }}
+                                        className="h-2 w-2 rounded-full bg-primary"
+                                        title="Mark read"
+                                      />
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteNotification(n._id);
+                                      }}
+                                      className="rounded p-0.5 text-gray-500 hover:text-red-400"
+                                      title="Delete"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            ))
+                              );
+                            })
                           ) : (
                             <div className="text-center text-xs text-gray-500 py-6">
                               No notifications.

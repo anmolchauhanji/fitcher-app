@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { projectApi, bidApi } from '../api/apiClient';
+import { formatDateDMY } from '../utils/formatDate';
+import { projectApi, bidApi, uploadApi } from '../api/apiClient';
 import { 
   MapPin, 
   Calendar, 
@@ -53,8 +54,8 @@ const ProjectDetails = () => {
         setMessage({ text: 'Project not found.', type: 'error' });
       }
     } catch (err) {
-      console.error("Error fetching project:", err);
-      setMessage({ text: 'Something went wrong while loading project details.', type: 'error' });
+      // console.error("Error fetching project:", err);
+      // setMessage({ text: 'Something went wrong while loading project details.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -106,6 +107,17 @@ const ProjectDetails = () => {
     }
   };
 
+  const handleDeletePhoto = async (publicId) => {
+    if (!window.confirm('Delete this photo?')) return;
+    try {
+      await uploadApi.deleteProjectImage(project._id, publicId);
+      await fetchDetails();
+      setMessage({ text: 'Photo deleted.', type: 'success' });
+    } catch (err) {
+      setMessage({ text: err.response?.data?.message || 'Failed to delete photo.', type: 'error' });
+    }
+  };
+
   if (loading) return (
     <div className="pt-48 flex flex-col items-center justify-center page-enter">
       <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
@@ -154,8 +166,8 @@ const ProjectDetails = () => {
                 <div className="min-w-0 flex-1"><p className="text-[10px] text-gray-500 font-bold uppercase">Location</p><p className="font-bold text-sm break-words">{project.location?.address}</p></div>
               </div>
               <div className="p-5 glass-card rounded-2xl flex items-center gap-4">
-                <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500"><Calendar size={20} /></div>
-                <div><p className="text-[10px] text-gray-500 font-bold uppercase">Posted On</p><p className="font-bold text-sm">{new Date(project.createdAt).toLocaleDateString()}</p></div>
+                  <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500"><Calendar size={20} /></div>
+                <div><p className="text-[10px] text-gray-500 font-bold uppercase">Posted On</p><p className="font-bold text-sm">{formatDateDMY(project.createdAt)}</p></div>
               </div>
             </div>
           </div>
@@ -176,11 +188,11 @@ const ProjectDetails = () => {
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Created Date</p>
-                  <p className="text-white font-semibold">{new Date(project.createdAt).toLocaleDateString()}</p>
+                  <p className="text-white font-semibold">{formatDateDMY(project.createdAt)}</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Expiry Date</p>
-                  <p className="text-white font-semibold">{new Date(project.expiresAt).toLocaleDateString()}</p>
+                  <p className="text-white font-semibold">{formatDateDMY(project.expiresAt)}</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Pin Code</p>
@@ -211,7 +223,14 @@ const ProjectDetails = () => {
                   <p className="text-white font-bold text-sm uppercase tracking-widest mb-4">Project Photos</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {project.photos.map((photo, index) => (
-                      <img key={photo.publicId || index} src={photo.url} alt={`Project ${index + 1}`} className="h-48 w-full object-cover rounded-2xl border border-white/10" />
+                      <div key={photo.publicId || index} className="relative">
+                        <img src={photo.url} alt={`Project ${index + 1}`} className="h-48 w-full object-cover rounded-2xl border border-white/10" />
+                        {isOwner && isOpen && (
+                          <button onClick={() => handleDeletePhoto(photo.publicId)} className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 p-2 rounded-full">
+                            <XCircle size={18} className="text-white" />
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
